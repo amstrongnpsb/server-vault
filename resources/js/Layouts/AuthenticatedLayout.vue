@@ -1,203 +1,195 @@
 <script setup>
-import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import Dropdown from '@/Components/Dropdown.vue';
-import DropdownLink from '@/Components/DropdownLink.vue';
-import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import ThemeToggle from '@/Components/ThemeToggle.vue';
-import { Link } from '@inertiajs/vue3';
+import ApplicationLogo from "@/Components/ApplicationLogo.vue";
+import Dropdown from "@/Components/Dropdown.vue";
+import DropdownLink from "@/Components/DropdownLink.vue";
+import ThemeToggle from "@/Components/ThemeToggle.vue";
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarHeader,
+    SidebarInset,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarProvider,
+    SidebarTrigger,
+} from "@/Components/ui/sidebar";
+import { Link } from "@inertiajs/vue3";
+import { LayoutDashboard, Server, Users } from "lucide-vue-next";
 
-const showingNavigationDropdown = ref(false);
+const menuItems = [
+    {
+        title: "Dashboard",
+        routeName: "dashboard",
+        icon: LayoutDashboard,
+        activePattern: "dashboard",
+    },
+    {
+        title: "User",
+        routeName: "users.index",
+        icon: Users,
+        activePattern: "users.*",
+    },
+    {
+        title: "Server",
+        routeName: "servers.index",
+        icon: Server,
+        activePattern: "servers.*",
+    },
+];
 </script>
 
 <template>
-    <div>
-        <div class="min-h-screen bg-background text-foreground">
-            <nav
-                class="border-b border-border bg-card"
-            >
-                <!-- Primary Navigation Menu -->
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="flex h-16 justify-between">
-                        <div class="flex">
-                            <!-- Logo -->
-                            <div class="flex shrink-0 items-center">
-                                <Link :href="route('dashboard')">
-                                    <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-foreground"
-                                    />
-                                </Link>
-                            </div>
-
-                            <!-- Navigation Links -->
-                            <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
-                            >
-                                <NavLink
-                                    :href="route('dashboard')"
-                                    :active="route().current('dashboard')"
-                                >
-                                    Dashboard
-                                </NavLink>
-                            </div>
-                        </div>
-
-                        <div class="hidden sm:ms-6 sm:flex sm:items-center sm:gap-3">
-                            <ThemeToggle />
-
-                            <!-- Settings Dropdown -->
-                            <div class="relative ms-3">
-                                <Dropdown align="right" width="48">
-                                    <template #trigger>
-                                        <span class="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                class="inline-flex items-center rounded-md border border-transparent bg-card px-3 py-2 text-sm font-medium leading-4 text-muted-foreground transition duration-150 ease-in-out hover:text-foreground focus:outline-none"
-                                            >
-                                                {{ $page.props.auth.user.name }}
-
-                                                <svg
-                                                    class="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fill-rule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clip-rule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </template>
-
-                                    <template #content>
-                                        <DropdownLink
-                                            :href="route('profile.edit')"
-                                        >
-                                            Profile
-                                        </DropdownLink>
-                                        <DropdownLink
-                                            :href="route('logout')"
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </DropdownLink>
-                                    </template>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <!-- Hamburger -->
-                        <div class="-me-2 flex items-center gap-2 sm:hidden">
-                            <ThemeToggle />
-
-                            <button
-                                @click="
-                                    showingNavigationDropdown =
-                                        !showingNavigationDropdown
-                                "
-                                class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition duration-150 ease-in-out hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground focus:outline-none"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        :class="{
-                                            hidden: showingNavigationDropdown,
-                                            'inline-flex':
-                                                !showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        :class="{
-                                            hidden: !showingNavigationDropdown,
-                                            'inline-flex':
-                                                showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Responsive Navigation Menu -->
-                <div
-                    :class="{
-                        block: showingNavigationDropdown,
-                        hidden: !showingNavigationDropdown,
-                    }"
-                    class="sm:hidden"
+    <SidebarProvider>
+        <Sidebar>
+            <SidebarHeader>
+                <Link
+                    :href="route('dashboard')"
+                    class="flex min-w-0 items-center gap-3 rounded-md px-2 py-1.5 transition hover:bg-muted"
                 >
-                    <div class="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            :href="route('dashboard')"
-                            :active="route().current('dashboard')"
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <!-- Responsive Settings Options -->
+                    <ApplicationLogo class="h-8 w-8 shrink-0" />
                     <div
-                        class="border-t border-border pb-1 pt-4"
+                        class="min-w-0 group-data-[state=collapsed]/sidebar-wrapper:hidden"
                     >
-                        <div class="px-4">
-                            <div
-                                class="text-base font-medium text-foreground"
-                            >
-                                {{ $page.props.auth.user.name }}
-                            </div>
-                            <div class="text-sm font-medium text-muted-foreground">
-                                {{ $page.props.auth.user.email }}
-                            </div>
+                        <div class="truncate text-sm font-semibold">
+                            ServerVault
                         </div>
+                        <div class="truncate text-xs text-muted-foreground">
+                            Admin Panel
+                        </div>
+                    </div>
+                </Link>
+            </SidebarHeader>
 
-                        <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="route('profile.edit')">
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                :href="route('logout')"
-                                method="post"
-                                as="button"
+            <SidebarContent>
+                <SidebarGroup>
+                    <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+
+                    <SidebarMenu>
+                        <SidebarMenuItem
+                            v-for="item in menuItems"
+                            :key="item.title"
+                        >
+                            <SidebarMenuButton
+                                :href="route(item.routeName)"
+                                :is-active="route().current(item.activePattern)"
+                                :tooltip="item.title"
                             >
-                                Log Out
-                            </ResponsiveNavLink>
+                                <component
+                                    :is="item.icon"
+                                    class="h-5 w-5 shrink-0"
+                                    aria-hidden="true"
+                                />
+                                <span
+                                    class="truncate group-data-[state=collapsed]/sidebar-wrapper:hidden"
+                                >
+                                    {{ item.title }}
+                                </span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroup>
+            </SidebarContent>
+
+            <SidebarFooter>
+                <div class="flex items-center gap-3 rounded-md px-2 py-1.5">
+                    <div
+                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground"
+                    >
+                        {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
+                    </div>
+                    <div
+                        class="min-w-0 group-data-[state=collapsed]/sidebar-wrapper:hidden"
+                    >
+                        <div class="truncate text-sm font-medium">
+                            {{ $page.props.auth.user.name }}
+                        </div>
+                        <div class="truncate text-xs text-muted-foreground">
+                            {{ $page.props.auth.user.email }}
                         </div>
                     </div>
                 </div>
-            </nav>
+            </SidebarFooter>
+        </Sidebar>
 
-            <!-- Page Heading -->
+        <SidebarInset>
             <header
-                class="bg-card shadow"
-                v-if="$slots.header"
+                class="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur"
             >
-                <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                    <slot name="header" />
+                <div
+                    class="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 md:px-8"
+                >
+                    <div class="flex min-w-0 items-center gap-2">
+                        <SidebarTrigger />
+
+                        <div class="min-w-0 pl-1">
+                            <slot name="header">
+                                <h1 class="truncate text-lg font-semibold">
+                                    Dashboard
+                                </h1>
+                            </slot>
+                        </div>
+                    </div>
+
+                    <div class="flex shrink-0 items-center gap-2">
+                        <ThemeToggle />
+
+                        <Dropdown align="right" width="48">
+                            <template #trigger>
+                                <button
+                                    type="button"
+                                    class="flex h-9 items-center gap-2 rounded-md border border-border bg-card px-2 text-sm transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+                                >
+                                    <span
+                                        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground"
+                                    >
+                                        {{
+                                            $page.props.auth.user.name
+                                                .charAt(0)
+                                                .toUpperCase()
+                                        }}
+                                    </span>
+                                    <span
+                                        class="hidden max-w-36 truncate font-medium sm:block"
+                                    >
+                                        {{ $page.props.auth.user.name }}
+                                    </span>
+                                </button>
+                            </template>
+
+                            <template #content>
+                                <div class="border-b border-border px-4 py-3">
+                                    <div class="truncate text-sm font-medium">
+                                        {{ $page.props.auth.user.name }}
+                                    </div>
+                                    <div
+                                        class="truncate text-xs text-muted-foreground"
+                                    >
+                                        {{ $page.props.auth.user.email }}
+                                    </div>
+                                </div>
+                                <DropdownLink :href="route('profile.edit')">
+                                    Profile
+                                </DropdownLink>
+                                <DropdownLink
+                                    :href="route('logout')"
+                                    method="post"
+                                    as="button"
+                                >
+                                    Log Out
+                                </DropdownLink>
+                            </template>
+                        </Dropdown>
+                    </div>
                 </div>
             </header>
 
-            <!-- Page Content -->
             <main>
                 <slot />
             </main>
-        </div>
-    </div>
+        </SidebarInset>
+    </SidebarProvider>
 </template>

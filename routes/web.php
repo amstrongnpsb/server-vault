@@ -13,6 +13,16 @@ Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/users', function () {
+        return Inertia::render('Users/Index');
+    })->name('users.index');
+
+    Route::get('/servers', function () {
+        return Inertia::render('Servers/Index');
+    })->name('servers.index');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
