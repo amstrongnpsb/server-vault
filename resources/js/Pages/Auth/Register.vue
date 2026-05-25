@@ -24,7 +24,14 @@ const submit = () => {
     <GuestLayout>
         <Head title="Register" />
 
-        <form @submit.prevent="submit">
+        <template #eyebrow>Create workspace</template>
+        <template #title>Start securing your servers</template>
+        <template #description>
+            Create your ServerVault account and prepare a private place for
+            infrastructure access.
+        </template>
+
+        <form class="space-y-5" @submit.prevent="submit">
             <div>
                 <InputLabel for="name" value="Name" />
 
@@ -36,6 +43,7 @@ const submit = () => {
                     required
                     autofocus
                     autocomplete="name"
+                    placeholder="Your name"
                 />
 
                 <InputError class="mt-2" :message="form.errors.name" />
@@ -51,6 +59,7 @@ const submit = () => {
                     v-model="form.email"
                     required
                     autocomplete="username"
+                    placeholder="you@example.com"
                 />
 
                 <InputError class="mt-2" :message="form.errors.email" />
@@ -66,6 +75,7 @@ const submit = () => {
                     v-model="form.password"
                     required
                     autocomplete="new-password"
+                    placeholder="Create a strong password"
                 />
 
                 <InputError class="mt-2" :message="form.errors.password" />
@@ -84,6 +94,7 @@ const submit = () => {
                     v-model="form.password_confirmation"
                     required
                     autocomplete="new-password"
+                    placeholder="Confirm your password"
                 />
 
                 <InputError
@@ -92,22 +103,25 @@ const submit = () => {
                 />
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    :href="route('login')"
-                    class="rounded-md text-sm text-muted-foreground underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
-                >
-                    Already registered?
-                </Link>
-
+            <div>
                 <PrimaryButton
-                    class="ms-4"
+                    class="w-full justify-center"
                     :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
                 >
-                    Register
+                    Create account
                 </PrimaryButton>
             </div>
+
+            <p class="text-center text-sm text-muted-foreground">
+                Already registered?
+                <Link
+                    :href="route('login')"
+                    class="font-medium text-foreground underline underline-offset-4"
+                >
+                    Sign in
+                </Link>
+            </p>
         </form>
     </GuestLayout>
 </template>
