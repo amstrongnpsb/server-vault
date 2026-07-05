@@ -3,6 +3,7 @@ import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
 import ThemeToggle from "@/Components/ThemeToggle.vue";
+import { Toaster } from "@/Components/ui/sonner";
 import {
     Sidebar,
     SidebarContent,
@@ -44,6 +45,7 @@ const menuItems = [
 
 <template>
     <SidebarProvider>
+        <Toaster />
         <Sidebar>
             <SidebarHeader>
                 <Link

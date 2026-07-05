@@ -14,9 +14,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/users', function () {
-        return Inertia::render('Users/Index');
-    })->name('users.index');
+    Route::resource('users', App\Http\Controllers\UserController::class);
 
     Route::get('/servers', function () {
         return Inertia::render('Servers/Index');
