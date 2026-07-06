@@ -15,6 +15,7 @@ class Permission extends SpatiePermission
      * @var string
      */
     protected $keyType = 'string';
+    protected $primaryKey = 'id';
 
     /**
      * Indicates if the IDs are auto-incrementing.

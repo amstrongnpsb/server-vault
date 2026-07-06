@@ -14,6 +14,7 @@ class Role extends SpatieRole
      *
      * @var string
      */
+    protected $primaryKey = 'id';
     protected $keyType = 'string';
 
     /**

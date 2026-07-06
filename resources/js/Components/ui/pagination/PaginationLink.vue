@@ -1,6 +1,6 @@
 <script setup>
 import { cn } from "@/lib/utils";
-import { buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/Components/ui/button';
 
 const props = defineProps({
   href: { type: String, required: false },

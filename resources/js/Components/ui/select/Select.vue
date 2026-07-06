@@ -6,6 +6,7 @@ const props = defineProps({
   defaultOpen: { type: Boolean, required: false },
   defaultValue: { type: null, required: false },
   modelValue: { type: null, required: false },
+  nullableValue: { type: String, required: false },
   by: { type: [String, Function], required: false },
   dir: { type: String, required: false },
   multiple: { type: Boolean, required: false },

@@ -19,7 +19,8 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $guarded = [];
+    protected $primaryKey = 'id';
+    protected $guarded = ['id'];
 
     /**
      * The primary key type.

@@ -1,7 +1,7 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Button } from '@/Components/ui/button';
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { Button } from "@/Components/ui/button";
 import {
     Table,
     TableBody,
@@ -9,7 +9,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/Components/ui/table';
+} from "@/Components/ui/table";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -19,7 +19,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '@/Components/ui/alert-dialog';
+} from "@/Components/ui/alert-dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -27,11 +27,17 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/Components/ui/dropdown-menu';
-import { Badge } from '@/Components/ui/badge';
-import { MoreHorizontal, Pencil, Plus, Trash2, UserCircle } from 'lucide-vue-next';
-import { ref } from 'vue';
-import { toast } from 'vue-sonner';
+} from "@/Components/ui/dropdown-menu";
+import { Badge } from "@/Components/ui/badge";
+import {
+    MoreHorizontal,
+    Pencil,
+    Plus,
+    Trash2,
+    UserCircle,
+} from "lucide-vue-next";
+import { ref } from "vue";
+import { toast } from "vue-sonner";
 
 const props = defineProps({
     users: Object,
@@ -64,7 +70,7 @@ const closeDeleteDialog = () => {
 const deleteUser = () => {
     if (!userToDelete.value) return;
 
-    router.delete(route('users.destroy', userToDelete.value.id), {
+    router.delete(route("users.destroy", userToDelete.value.id), {
         preserveScroll: true,
         onSuccess: () => {
             closeDeleteDialog();
@@ -72,13 +78,13 @@ const deleteUser = () => {
     });
 };
 
-const getRoleBadgeVariant = (roleName) => {
-    const variants = {
-        'admin': 'destructive',
-        'moderator': 'default',
-        'user': 'secondary',
+const getRoleBadgeClass = (roleName) => {
+    const classes = {
+        admin: "border-cyan-500 ",
+        superadmin: "border-red-500",
+        user: "border-green-500",
     };
-    return variants[roleName?.toLowerCase()] || 'outline';
+    return classes[roleName?.toLowerCase()] || "border-border text-foreground";
 };
 </script>
 
@@ -93,12 +99,17 @@ const getRoleBadgeVariant = (roleName) => {
         <div class="px-4 py-8 sm:px-6 lg:px-8">
             <div class="space-y-4">
                 <!-- Header Section with Add Button -->
-                <div class="rounded-md border border-border bg-card p-6 text-card-foreground shadow-sm">
+                <div
+                    class="rounded-md border border-border bg-card p-6 text-card-foreground shadow-sm"
+                >
                     <div class="flex items-start justify-between">
                         <div>
-                            <h2 class="text-base font-semibold">User Management</h2>
+                            <h2 class="text-base font-semibold">
+                                User Management
+                            </h2>
                             <p class="mt-2 text-sm text-muted-foreground">
-                                Manage application users, roles, and access. Total users: {{ users.total }}
+                                Manage application users, roles, and access.
+                                Total users: {{ users.total }}
                             </p>
                         </div>
                         <Button as-child>
@@ -120,19 +131,29 @@ const getRoleBadgeVariant = (roleName) => {
                                     <TableHead>Email</TableHead>
                                     <TableHead>Roles</TableHead>
                                     <TableHead>Created At</TableHead>
-                                    <TableHead class="text-right">Actions</TableHead>
+                                    <TableHead class="text-right"
+                                        >Actions</TableHead
+                                    >
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 <TableRow v-if="users.data.length === 0">
-                                    <TableCell colspan="5" class="text-center text-muted-foreground">
+                                    <TableCell
+                                        colspan="5"
+                                        class="text-center text-muted-foreground"
+                                    >
                                         No users found.
                                     </TableCell>
                                 </TableRow>
-                                <TableRow v-for="user in users.data" :key="user.id">
+                                <TableRow
+                                    v-for="user in users.data"
+                                    :key="user.id"
+                                >
                                     <TableCell class="font-medium">
                                         <div class="flex items-center gap-2">
-                                            <UserCircle class="h-5 w-5 text-muted-foreground" />
+                                            <UserCircle
+                                                class="h-5 w-5 text-muted-foreground"
+                                            />
                                             {{ user.name }}
                                         </div>
                                     </TableCell>
@@ -142,12 +163,21 @@ const getRoleBadgeVariant = (roleName) => {
                                             <Badge
                                                 v-for="role in user.roles"
                                                 :key="role.id"
-                                                :variant="getRoleBadgeVariant(role.name)"
+                                                :variant="'outline'"
+                                                :class="[
+                                                    'rounded-sm px-2 py-1 text-xs font-medium',
+                                                    getRoleBadgeClass(
+                                                        role.name,
+                                                    ),
+                                                ]"
                                             >
                                                 {{ role.name }}
                                             </Badge>
                                             <span
-                                                v-if="!user.roles || user.roles.length === 0"
+                                                v-if="
+                                                    !user.roles ||
+                                                    user.roles.length === 0
+                                                "
                                                 class="text-sm text-muted-foreground"
                                             >
                                                 No roles
@@ -155,33 +185,57 @@ const getRoleBadgeVariant = (roleName) => {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        {{ new Date(user.created_at).toLocaleDateString() }}
+                                        {{
+                                            new Date(
+                                                user.created_at,
+                                            ).toLocaleDateString()
+                                        }}
                                     </TableCell>
                                     <TableCell class="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger as-child>
-                                                <Button variant="ghost" size="icon">
-                                                    <MoreHorizontal class="h-4 w-4" />
-                                                    <span class="sr-only">Open menu</span>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                >
+                                                    <MoreHorizontal
+                                                        class="h-4 w-4"
+                                                    />
+                                                    <span class="sr-only"
+                                                        >Open menu</span
+                                                    >
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuLabel
+                                                    >Actions</DropdownMenuLabel
+                                                >
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem as-child>
                                                     <Link
-                                                        :href="route('users.edit', user.id)"
+                                                        :href="
+                                                            route(
+                                                                'users.edit',
+                                                                user.id,
+                                                            )
+                                                        "
                                                         class="flex w-full cursor-pointer items-center"
                                                     >
-                                                        <Pencil class="mr-2 h-4 w-4" />
+                                                        <Pencil
+                                                            class="mr-2 h-4 w-4"
+                                                        />
                                                         Edit
                                                     </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     class="text-destructive focus:text-destructive"
-                                                    @click="openDeleteDialog(user)"
+                                                    @click="
+                                                        openDeleteDialog(user)
+                                                    "
                                                 >
-                                                    <Trash2 class="mr-2 h-4 w-4" />
+                                                    <Trash2
+                                                        class="mr-2 h-4 w-4"
+                                                    />
                                                     Delete
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -199,13 +253,16 @@ const getRoleBadgeVariant = (roleName) => {
                     >
                         <div class="flex items-center justify-between">
                             <div class="text-sm text-muted-foreground">
-                                Showing {{ users.from }} to {{ users.to }} of {{ users.total }} results
+                                Showing {{ users.from }} to {{ users.to }} of
+                                {{ users.total }} results
                             </div>
                             <div class="flex gap-2">
                                 <Button
                                     v-for="link in users.links"
                                     :key="link.label"
-                                    :variant="link.active ? 'default' : 'outline'"
+                                    :variant="
+                                        link.active ? 'default' : 'outline'
+                                    "
                                     size="sm"
                                     :disabled="!link.url"
                                     as-child
@@ -229,15 +286,20 @@ const getRoleBadgeVariant = (roleName) => {
         <AlertDialog :open="deleteDialogOpen" @update:open="closeDeleteDialog">
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle
+                        >Are you absolutely sure?</AlertDialogTitle
+                    >
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the user
-                        <strong>{{ userToDelete?.name }}</strong> and remove their data from the
-                        system.
+                        This action cannot be undone. This will permanently
+                        delete the user
+                        <strong>{{ userToDelete?.name }}</strong> and remove
+                        their data from the system.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel @click="closeDeleteDialog">Cancel</AlertDialogCancel>
+                    <AlertDialogCancel @click="closeDeleteDialog"
+                        >Cancel</AlertDialogCancel
+                    >
                     <AlertDialogAction
                         class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         @click="deleteUser"

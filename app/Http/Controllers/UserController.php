@@ -51,7 +51,7 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        if (isset($validated['roles']) && is_array($validated['roles'])) {
+        if (isset($validated['roles']) && is_array($validated['roles']) && !empty($validated['roles'])) {
             $user->syncRoles($validated['roles']);
         }
 
@@ -95,6 +95,8 @@ class UserController extends Controller
 
         if (isset($validated['roles']) && is_array($validated['roles'])) {
             $user->syncRoles($validated['roles']);
+        } else {
+            $user->syncRoles([]); // Remove all roles if none provided
         }
 
         return redirect()->route('users.index')
