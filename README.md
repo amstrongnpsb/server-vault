@@ -27,6 +27,36 @@ The goal of the app is to help users manage their servers in one place. Users ca
 - Laravel Reverb
 - phpseclib
 - xterm.js
+- Docker
+
+## Quick Start with Docker
+
+### Development (Hybrid - Fast on Windows):
+```bash
+# Terminal 1: Docker backend
+npm run docker:dev:build  # First time
+npm run artisan:key
+npm run artisan:migrate
+
+# Terminal 2: Vite on Windows
+npm install  # First time
+npm run dev
+
+# Daily: Just run both terminals
+npm run docker:dev  # Terminal 1
+npm run dev         # Terminal 2
+```
+
+### Production (Full Docker):
+```bash
+# Build and deploy
+npm run docker:prod:build
+npm run artisan:prod:migrate
+npm run artisan:prod:optimize
+```
+
+**Docker Documentation:**
+- **📘 Complete Docker Guide**: `documentation/08-docker-guide.md` *(Simple & direct guide - Updated July 2026)*
 
 ## Status
 

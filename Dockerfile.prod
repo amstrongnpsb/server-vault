@@ -1,0 +1,94 @@
+FROM php:8.2-fpm AS base
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libzip-dev \
+    libpq-dev
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip opcache
+
+# Install Redis extension
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy composer files
+COPY composer.json composer.lock ./
+
+# Install PHP dependencies (production)
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+
+# Node build stage
+FROM node:22-alpine AS node-builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --ignore-scripts
+
+COPY . .
+RUN npm run build
+
+# Final production image
+FROM php:8.2-fpm
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    libpq-dev \
+    nginx \
+    curl
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip opcache
+RUN pecl install redis && docker-php-ext-enable redis
+
+WORKDIR /var/www/html
+
+# Copy application files
+COPY --chown=www-data:www-data . .
+
+# Copy vendor from base stage
+COPY --from=base --chown=www-data:www-data /var/www/html/vendor ./vendor
+
+# Copy built assets from node-builder
+COPY --from=node-builder --chown=www-data:www-data /app/public/build ./public/build
+
+# Copy configurations
+COPY docker/php/production.ini /usr/local/etc/php/conf.d/production.ini
+COPY docker/nginx/production.conf /etc/nginx/sites-available/default
+
+# Create startup script
+RUN echo '#!/bin/sh\n\
+php-fpm -D\n\
+exec nginx -g "daemon off;"' > /start.sh && chmod +x /start.sh
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
+    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && \
+    mkdir -p /var/log/nginx /var/cache/nginx && \
+    chown -R www-data:www-data /var/log/nginx /var/cache/nginx
+
+EXPOSE 80
+
+CMD ["/start.sh"]
