@@ -140,16 +140,6 @@ const openEditModal = (server) => {
     serverToEdit.value = server;
     editModalOpen.value = true;
 };
-
-const closeCreateModal = () => {
-    createModalOpen.value = false;
-};
-
-const closeEditModal = () => {
-    editModalOpen.value = false;
-    serverToEdit.value = null;
-};
-
 const handleServerSaved = () => {
     // Refresh the server list without flashing
     router.reload({

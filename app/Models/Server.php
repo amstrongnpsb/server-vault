@@ -45,7 +45,7 @@ class Server extends Model
      */
     public static function getOsOptions(): array
     {
-        return ['Ubuntu', 'Debian', 'CentOS', 'Windows', 'Other'];
+        return ['Ubuntu', 'Debian', 'CentOS', 'Windows'];
     }
 
     /**
@@ -71,8 +71,8 @@ class Server extends Model
 
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
-              ->orWhere('host', 'like', "%{$search}%")
-              ->orWhere('description', 'like', "%{$search}%");
+                ->orWhere('host', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%");
         });
     }
 
@@ -131,7 +131,7 @@ class Server extends Model
     {
         return match ($this->os) {
             'Ubuntu' => 'ubuntu-icon',
-            'Debian' => 'debian-icon', 
+            'Debian' => 'debian-icon',
             'CentOS' => 'centos-icon',
             'Windows' => 'windows-icon',
             default => 'server-icon',
