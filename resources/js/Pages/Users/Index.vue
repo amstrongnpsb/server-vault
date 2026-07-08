@@ -4,6 +4,7 @@ import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import FadeIn from "@/Components/FadeIn.vue";
+import MultiSelectFilter from "@/Components/MultiSelectFilter.vue";
 import {
     Table,
     TableBody,
@@ -23,15 +24,6 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/Components/ui/pagination";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from "@/Components/ui/select";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -60,6 +52,7 @@ import {
     Trash2,
     UserCircle,
     X,
+    Shield,
 } from "lucide-vue-next";
 import { ref, computed, watch } from "vue";
 import { debounce } from "lodash-es";
@@ -83,6 +76,11 @@ const selectedRole = ref(
           : [],
 );
 const isLoading = ref(false);
+
+// Convert roles array to simple string array for MultiSelectFilter
+const roleOptions = computed(() => {
+    return props.roles.map((role) => role.name);
+});
 
 const openDeleteDialog = (user) => {
     userToDelete.value = user;
@@ -151,10 +149,6 @@ watch(selectedRole, () => {
 
 const clearSearch = () => {
     search.value = "";
-};
-
-const clearRoleFilter = () => {
-    selectedRole.value = [];
 };
 
 // Pagination computed properties
@@ -277,40 +271,17 @@ const handlePageChange = (page) => {
                         </div>
 
                         <!-- Role Filter -->
-                        <div class="flex items-center gap-2">
-                            <Select v-model="selectedRole" multiple>
-                                <SelectTrigger class="w-64">
-                                    <SelectValue
-                                        placeholder="Filter by roles"
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectLabel
-                                            >Filter by Roles</SelectLabel
-                                        >
-                                        <SelectItem
-                                            v-for="role in roles"
-                                            :key="role.id"
-                                            :value="role.name"
-                                            class="hover:text-accent-foreground hover:bg-secondary focus:bg-secondary focus:text-foreground outline-none cursor-pointer"
-                                        >
-                                            {{ role.name }}
-                                        </SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                            <!-- Clear Role Filter Button -->
-                            <button
-                                v-if="selectedRole && selectedRole.length > 0"
-                                type="button"
-                                @click="clearRoleFilter"
-                                class="flex items-center justify-center w-8 h-8 text-muted-foreground transition-all duration-200 hover:text-foreground hover:scale-110 hover:bg-muted/50 rounded-md"
-                                title="Clear role filter"
-                            >
-                                <X class="h-4 w-4" />
-                            </button>
-                        </div>
+                        <MultiSelectFilter
+                            v-model="selectedRole"
+                            :options="roleOptions"
+                            :icon="Shield"
+                            placeholder="Filter by Role"
+                            label="Select Role"
+                            custom-label="Add Custom Role"
+                            custom-placeholder="Type role name..."
+                            :allow-custom="true"
+                            :max-badges="3"
+                        />
                     </div>
                 </FadeIn>
 
