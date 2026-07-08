@@ -51,6 +51,7 @@ import {
     DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
 import { Badge } from "@/Components/ui/badge";
+import { Skeleton } from "@/Components/ui/skeleton";
 import {
     MoreHorizontal,
     Pencil,
@@ -76,7 +77,13 @@ const userToDelete = ref(null);
 const search = ref(props.filters?.search || "");
 // Convert string to array if needed (when coming from URL)
 const initialRole = props.filters?.role || [];
-const selectedRole = ref(Array.isArray(initialRole) ? initialRole : (initialRole ? initialRole.split(',') : []));
+const selectedRole = ref(
+    Array.isArray(initialRole)
+        ? initialRole
+        : initialRole
+          ? initialRole.split(",")
+          : [],
+);
 const isLoading = ref(false);
 
 // Show success/error messages
@@ -121,11 +128,12 @@ const getRoleBadgeClass = (roleName) => {
 // Search functionality
 const performSearch = debounce(() => {
     isLoading.value = true;
-    
+
     // Convert array to comma-separated string for URL compatibility
-    const roleParam = selectedRole.value && selectedRole.value.length > 0 
-        ? selectedRole.value.join(',') 
-        : '';
+    const roleParam =
+        selectedRole.value && selectedRole.value.length > 0
+            ? selectedRole.value.join(",")
+            : "";
 
     router.get(
         route("users.index"),
@@ -178,11 +186,12 @@ console.log("Pagination Debug:", {
 const handlePageChange = (page) => {
     console.log("Navigating to page:", page);
     isLoading.value = true;
-    
+
     // Convert array to comma-separated string for URL compatibility
-    const roleParam = selectedRole.value && selectedRole.value.length > 0 
-        ? selectedRole.value.join(',') 
-        : '';
+    const roleParam =
+        selectedRole.value && selectedRole.value.length > 0
+            ? selectedRole.value.join(",")
+            : "";
 
     router.get(
         route("users.index"),
@@ -224,8 +233,13 @@ const handlePageChange = (page) => {
                                 </h2>
                                 <p class="mt-2 text-sm text-muted-foreground">
                                     Manage application users, roles, and access.
+                                    <span v-if="isLoading">
+                                        <Skeleton
+                                            class="inline-block h-4 w-24"
+                                        />
+                                    </span>
                                     <span
-                                        v-if="search"
+                                        v-else-if="search"
                                         class="font-medium text-foreground"
                                     >
                                         {{ users.total }} result{{
@@ -262,7 +276,7 @@ const handlePageChange = (page) => {
                                 v-model="search"
                                 type="text"
                                 placeholder="Search users..."
-                                class="pl-10 pr-10 transition-all duration-200 focus:pl-10 focus:pr-10 focus:ring-2"
+                                class="pl-10 pr-10 transition-all duration-200 focus:pl-10 focus:pr-10"
                             />
                             <button
                                 v-if="search"
@@ -277,15 +291,20 @@ const handlePageChange = (page) => {
                         <div class="flex items-center gap-2">
                             <Select v-model="selectedRole" multiple>
                                 <SelectTrigger class="w-64">
-                                    <SelectValue placeholder="Filter by roles" />
+                                    <SelectValue
+                                        placeholder="Filter by roles"
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectLabel>Filter by Roles</SelectLabel>
+                                        <SelectLabel
+                                            >Filter by Roles</SelectLabel
+                                        >
                                         <SelectItem
                                             v-for="role in roles"
                                             :key="role.id"
                                             :value="role.name"
+                                            class="hover:text-accent-foreground hover:bg-secondary focus:bg-secondary focus:text-foreground outline-none cursor-pointer"
                                         >
                                             {{ role.name }}
                                         </SelectItem>
@@ -303,49 +322,14 @@ const handlePageChange = (page) => {
                                 <X class="h-4 w-4" />
                             </button>
                         </div>
-
-                        <div
-                            v-if="search || (selectedRole && selectedRole.length > 0)"
-                            class="flex items-center gap-2 text-sm text-muted-foreground animate-fade-in"
-                        >
-                            <div
-                                class="flex items-center gap-2 px-2 py-1 bg-muted/50 rounded-md"
-                            >
-                                <span v-if="search"
-                                    >Searching: "{{ search }}"</span
-                                >
-                                <span v-if="search && selectedRole && selectedRole.length > 0">•</span>
-                                <span
-                                    v-if="selectedRole && selectedRole.length > 0"
-                                    class="flex items-center gap-1"
-                                >
-                                    Roles:
-                                    <div class="flex flex-wrap gap-1">
-                                        <Badge 
-                                            v-for="role in selectedRole" 
-                                            :key="role"
-                                            variant="outline" 
-                                            class="text-xs"
-                                        >
-                                            {{ role }}
-                                        </Badge>
-                                    </div>
-                                </span>
-                                <span class="text-xs text-muted-foreground/80">
-                                    ({{ users.total }} result{{
-                                        users.total !== 1 ? "s" : ""
-                                    }})
-                                </span>
-                            </div>
-                        </div>
                     </div>
                 </FadeIn>
 
                 <!-- Users Table -->
                 <FadeIn :delay="0.3">
                     <div
-                        class="rounded-md border border-border bg-card shadow-sm overflow-hidden"
-                        :class="{ 'opacity-75': isLoading }"
+                        class="rounded-md border border-border bg-card shadow-sm overflow-hidden transition-opacity duration-200"
+                        :class="{ 'opacity-90': isLoading }"
                     >
                         <Table>
                             <TableHeader>
@@ -360,22 +344,42 @@ const handlePageChange = (page) => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                <!-- Loading State -->
-                                <TableRow v-if="isLoading">
-                                    <TableCell
-                                        colspan="5"
-                                        class="text-center text-muted-foreground py-8"
+                                <!-- Loading State with Skeleton -->
+                                <template v-if="isLoading">
+                                    <TableRow
+                                        v-for="i in 10"
+                                        :key="`skeleton-${i}`"
                                     >
-                                        <div
-                                            class="flex items-center justify-center gap-2"
-                                        >
+                                        <TableCell class="font-medium">
                                             <div
-                                                class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"
-                                            ></div>
-                                            <span>Loading users...</span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
+                                                class="flex items-center gap-2"
+                                            >
+                                                <Skeleton
+                                                    class="h-5 w-5 rounded-full"
+                                                />
+                                                <Skeleton class="h-4 w-32" />
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton class="h-4 w-48" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <div class="flex flex-wrap gap-1">
+                                                <Skeleton
+                                                    class="h-6 w-16 rounded-sm"
+                                                />
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton class="h-4 w-24" />
+                                        </TableCell>
+                                        <TableCell class="text-right">
+                                            <Skeleton
+                                                class="h-8 w-8 rounded-md ml-auto"
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                </template>
                                 <!-- No Results State -->
                                 <TableRow v-else-if="users.data.length === 0">
                                     <TableCell
@@ -514,8 +518,13 @@ const handlePageChange = (page) => {
                             class="flex flex-col items-center gap-4 sm:flex-row sm:justify-between"
                         >
                             <div class="text-sm text-muted-foreground">
-                                Showing {{ users.from }} to {{ users.to }} of
-                                {{ totalItems }} results
+                                <span v-if="isLoading">
+                                    <Skeleton class="inline-block h-4 w-32" />
+                                </span>
+                                <span v-else>
+                                    Showing {{ users.from }} to
+                                    {{ users.to }} of {{ totalItems }} results
+                                </span>
                             </div>
 
                             <Pagination
