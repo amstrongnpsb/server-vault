@@ -53,6 +53,11 @@ import {
     DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
 import { Badge } from "@/Components/ui/badge";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/Components/ui/popover";
 import OsIcon from "@/Components/OsIcon.vue";
 import {
     MoreHorizontal,
@@ -103,6 +108,10 @@ const selectedStatus = ref(
 );
 
 const isLoading = ref(false);
+
+// Custom OS input for filter
+const customOsInput = ref("");
+const showCustomOsInput = ref(false);
 
 const openDeleteDialog = (server) => {
     serverToDelete.value = server;
@@ -206,6 +215,26 @@ const clearOsFilter = () => {
 
 const clearStatusFilter = () => {
     selectedStatus.value = [];
+};
+
+const toggleOsFilter = (os) => {
+    if (selectedOs.value.includes(os)) {
+        selectedOs.value = selectedOs.value.filter((item) => item !== os);
+    } else {
+        selectedOs.value = [...selectedOs.value, os];
+    }
+};
+
+const addCustomOs = () => {
+    const customOs = customOsInput.value.trim();
+    if (customOs && !selectedOs.value.includes(customOs)) {
+        selectedOs.value = [...selectedOs.value, customOs];
+        customOsInput.value = "";
+    }
+};
+
+const removeOsFromFilter = (osToRemove) => {
+    selectedOs.value = selectedOs.value.filter((os) => os !== osToRemove);
 };
 
 // Pagination computed properties
@@ -335,25 +364,192 @@ const getStatusBadgeClass = (status) => {
 
                         <!-- OS Filter -->
                         <div class="flex items-center gap-2">
-                            <Select v-model="selectedOs" multiple>
-                                <SelectTrigger class="w-48">
-                                    <SelectValue placeholder="Filter by OS" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectLabel
-                                            >Operating System</SelectLabel
+                            <Popover>
+                                <PopoverTrigger as-child>
+                                    <Button
+                                        variant="outline"
+                                        class="w-48 justify-start text-left font-normal"
+                                    >
+                                        <Server class="mr-2 h-4 w-4" />
+                                        <span class="truncate">
+                                            {{
+                                                selectedOs.length > 0
+                                                    ? `${selectedOs.length} selected`
+                                                    : "Filter by OS"
+                                            }}
+                                        </span>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent class="w-64 p-0" align="start">
+                                    <div class="p-2 space-y-2">
+                                        <!-- Predefined OS options -->
+                                        <div class="space-y-1">
+                                            <div
+                                                class="px-2 py-1.5 text-xs font-medium text-muted-foreground"
+                                            >
+                                                Select OS
+                                            </div>
+                                            <div
+                                                v-for="os in osOptions"
+                                                :key="os"
+                                                class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer transition-colors"
+                                                @click="toggleOsFilter(os)"
+                                            >
+                                                <div
+                                                    class="h-4 w-4 border rounded flex items-center justify-center"
+                                                    :class="
+                                                        selectedOs.includes(os)
+                                                            ? 'bg-primary border-primary'
+                                                            : 'border-input'
+                                                    "
+                                                >
+                                                    <svg
+                                                        v-if="
+                                                            selectedOs.includes(
+                                                                os,
+                                                            )
+                                                        "
+                                                        class="h-3 w-3 text-primary-foreground"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="3"
+                                                            d="M5 13l4 4L19 7"
+                                                        />
+                                                    </svg>
+                                                </div>
+                                                <OsIcon
+                                                    :os="os"
+                                                    size="h-4 w-4"
+                                                />
+                                                <span class="text-sm">{{
+                                                    os
+                                                }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Divider -->
+                                        <div
+                                            class="border-t border-border"
+                                        ></div>
+
+                                        <!-- Custom OS input -->
+                                        <div class="space-y-2">
+                                            <div
+                                                class="px-2 py-1.5 text-xs font-medium text-muted-foreground rounded-sm"
+                                            >
+                                                Add Custom OS
+                                            </div>
+                                            <div class="flex gap-1 px-2">
+                                                <Input
+                                                    v-model="customOsInput"
+                                                    placeholder="Type OS name..."
+                                                    class="h-8 text-sm"
+                                                    @keyup.enter="addCustomOs"
+                                                    @keydown.stop
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    @click="addCustomOs"
+                                                    class="h-8 px-2 rounded-sm hover:opacity-80 cursor-pointer"
+                                                    :disabled="
+                                                        !customOsInput.trim()
+                                                    "
+                                                >
+                                                    <Plus class="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Selected custom OS (not in predefined list) -->
+                                        <div
+                                            v-if="
+                                                selectedOs.some(
+                                                    (os) =>
+                                                        !osOptions.includes(os),
+                                                )
+                                            "
+                                            class="space-y-1"
                                         >
-                                        <SelectItem
-                                            v-for="os in osOptions"
-                                            :key="os"
-                                            :value="os"
+                                            <div
+                                                class="border-t border-border"
+                                            ></div>
+                                            <div
+                                                class="px-2 py-1.5 text-xs font-medium text-muted-foreground"
+                                            >
+                                                Custom OS Selected
+                                            </div>
+                                            <div
+                                                v-for="os in selectedOs.filter(
+                                                    (os) =>
+                                                        !osOptions.includes(os),
+                                                )"
+                                                :key="os"
+                                                class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md hover:bg-accent transition-colors"
+                                            >
+                                                <div
+                                                    class="flex items-center gap-2"
+                                                >
+                                                    <OsIcon
+                                                        :os="os"
+                                                        size="h-4 w-4"
+                                                    />
+                                                    <span class="text-sm">{{
+                                                        os
+                                                    }}</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    @click="
+                                                        removeOsFromFilter(os)
+                                                    "
+                                                    class="text-muted-foreground hover:text-destructive"
+                                                >
+                                                    <X class="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+
+                            <!-- Selected OS badges -->
+                            <div
+                                v-if="selectedOs.length > 0"
+                                class="flex items-center gap-1"
+                            >
+                                <div class="flex flex-wrap gap-1 max-w-md">
+                                    <Badge
+                                        v-for="os in selectedOs.slice(0, 3)"
+                                        :key="os"
+                                        variant="secondary"
+                                        class="flex items-center gap-1 px-2 py-0.5"
+                                    >
+                                        <OsIcon :os="os" size="h-3 w-3" />
+                                        <span class="text-xs">{{ os }}</span>
+                                        <button
+                                            type="button"
+                                            @click="removeOsFromFilter(os)"
+                                            class="ml-1 hover:text-destructive"
                                         >
-                                            {{ os }}
-                                        </SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
+                                            <X class="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                    <Badge
+                                        v-if="selectedOs.length > 3"
+                                        variant="secondary"
+                                        class="px-2 py-0.5 text-xs"
+                                    >
+                                        +{{ selectedOs.length - 3 }} more
+                                    </Badge>
+                                </div>
+                            </div>
+
                             <button
                                 v-if="selectedOs && selectedOs.length > 0"
                                 type="button"
