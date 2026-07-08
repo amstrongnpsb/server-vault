@@ -21,6 +21,7 @@
         "artisan:migrate": "docker-compose exec app php artisan migrate",
         "artisan:migrate:fresh": "docker-compose exec app php artisan migrate:fresh",
         "artisan:seed": "docker-compose exec app php artisan db:seed",
+        "artisan:user": "docker-compose exec app php artisan db:seed --class=UserSeeder",
         "artisan:key": "docker-compose exec app php artisan key:generate",
         "artisan:cache:clear": "docker-compose exec app php artisan optimize:clear",
         "artisan:prod:migrate": "docker-compose -f docker-compose.prod.yml exec app php artisan migrate --force",

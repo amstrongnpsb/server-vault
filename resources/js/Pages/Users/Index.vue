@@ -11,6 +11,17 @@ import {
     TableRow,
 } from "@/Components/ui/table";
 import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationFirst,
+    PaginationItem,
+    PaginationLast,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/Components/ui/pagination";
+import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -36,7 +47,7 @@ import {
     Trash2,
     UserCircle,
 } from "lucide-vue-next";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { toast } from "vue-sonner";
 
 const props = defineProps({
@@ -85,6 +96,33 @@ const getRoleBadgeClass = (roleName) => {
         user: "border-green-500",
     };
     return classes[roleName?.toLowerCase()] || "border-border text-foreground";
+};
+
+// Pagination computed properties
+const currentPage = computed(() => props.users.current_page);
+const totalPages = computed(() => props.users.last_page);
+const itemsPerPage = computed(() => props.users.per_page);
+const totalItems = computed(() => props.users.total);
+
+// Debug pagination values
+console.log("Pagination Debug:", {
+    currentPage: currentPage.value,
+    totalPages: totalPages.value,
+    itemsPerPage: itemsPerPage.value,
+    totalItems: totalItems.value,
+    usersObject: props.users,
+});
+
+const handlePageChange = (page) => {
+    console.log("Navigating to page:", page);
+    router.get(
+        route("users.index", { page }),
+        {},
+        {
+            preserveState: true,
+            preserveScroll: true,
+        },
+    );
 };
 </script>
 
@@ -248,34 +286,72 @@ const getRoleBadgeClass = (roleName) => {
 
                     <!-- Pagination -->
                     <div
-                        v-if="users.last_page > 1"
+                        v-if="totalPages > 1"
                         class="border-t border-border p-4"
                     >
-                        <div class="flex items-center justify-between">
+                        <div
+                            class="flex flex-col items-center gap-4 sm:flex-row sm:justify-between"
+                        >
                             <div class="text-sm text-muted-foreground">
                                 Showing {{ users.from }} to {{ users.to }} of
-                                {{ users.total }} results
+                                {{ totalItems }} results
                             </div>
-                            <div class="flex gap-2">
-                                <Button
-                                    v-for="link in users.links"
-                                    :key="link.label"
-                                    :variant="
-                                        link.active ? 'default' : 'outline'
-                                    "
-                                    size="sm"
-                                    :disabled="!link.url"
-                                    as-child
-                                >
-                                    <Link
-                                        v-if="link.url"
-                                        :href="link.url"
-                                        preserve-scroll
-                                        v-html="link.label"
+
+                            <Pagination
+                                :page="currentPage"
+                                @update:page="handlePageChange"
+                                :total="totalItems"
+                                :items-per-page="itemsPerPage"
+                                :sibling-count="1"
+                                show-edges
+                            >
+                                <PaginationContent v-slot="{ items }">
+                                    <PaginationFirst
+                                        @click="handlePageChange(1)"
                                     />
-                                    <span v-else v-html="link.label" />
-                                </Button>
-                            </div>
+                                    <PaginationPrevious
+                                        @click="
+                                            currentPage > 1 &&
+                                            handlePageChange(currentPage - 1)
+                                        "
+                                    />
+
+                                    <template
+                                        v-for="(item, index) in items"
+                                        :key="index"
+                                    >
+                                        <Button
+                                            v-if="item.type === 'page'"
+                                            :variant="
+                                                item.value === currentPage
+                                                    ? 'default'
+                                                    : 'outline'
+                                            "
+                                            size="icon"
+                                            @click="
+                                                handlePageChange(item.value)
+                                            "
+                                        >
+                                            {{ item.value }}
+                                        </Button>
+
+                                        <PaginationEllipsis
+                                            v-else
+                                            :index="index"
+                                        />
+                                    </template>
+
+                                    <PaginationNext
+                                        @click="
+                                            currentPage < totalPages &&
+                                            handlePageChange(currentPage + 1)
+                                        "
+                                    />
+                                    <PaginationLast
+                                        @click="handlePageChange(totalPages)"
+                                    />
+                                </PaginationContent>
+                            </Pagination>
                         </div>
                     </div>
                 </div>
