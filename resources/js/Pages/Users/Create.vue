@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import UserForm from '@/Components/UserForm.vue';
 import { Head, router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 
 const props = defineProps({
     roles: {
@@ -13,6 +14,9 @@ const props = defineProps({
 const handleSubmit = (form) => {
     form.post(route('users.store'), {
         preserveScroll: true,
+        onSuccess: () => {
+            toast.success('User created successfully!');
+        },
     });
 };
 

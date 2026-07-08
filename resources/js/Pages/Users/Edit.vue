@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import UserForm from '@/Components/UserForm.vue';
 import { Head, router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 
 const props = defineProps({
     user: {
@@ -17,6 +18,9 @@ const props = defineProps({
 const handleSubmit = (form) => {
     form.put(route('users.update', props.user.id), {
         preserveScroll: true,
+        onSuccess: () => {
+            toast.success('User updated successfully!');
+        },
     });
 };
 
