@@ -144,8 +144,11 @@ console.log("Pagination Debug:", {
 const handlePageChange = (page) => {
     console.log("Navigating to page:", page);
     router.get(
-        route("users.index", { page }),
-        {},
+        route("users.index"),
+        { 
+            page: page,
+            search: search.value 
+        },
         {
             preserveState: true,
             preserveScroll: true,
