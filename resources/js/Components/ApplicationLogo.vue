@@ -12,17 +12,37 @@
             class="fill-background"
             d="M31 31.5A6.5 6.5 0 0 1 37.5 25h21A6.5 6.5 0 0 1 65 31.5v33A6.5 6.5 0 0 1 58.5 71h-21A6.5 6.5 0 0 1 31 64.5v-33Z"
         />
+        <rect
+            class="fill-primary"
+            x="38"
+            y="29"
+            width="20"
+            height="7"
+            rx="1.5"
+        />
+        <circle class="fill-background" cx="41" cy="32.5" r="1.4" />
+        <rect
+            class="fill-primary"
+            x="38"
+            y="38"
+            width="20"
+            height="7"
+            rx="1.5"
+        />
+        <circle class="fill-background" cx="41" cy="41.5" r="1.4" />
         <path
             class="fill-primary"
-            d="M38 33h20v8H38v-8Zm0 13h20v8H38v-8Zm0 13h20v4H38v-4Z"
+            d="M41 57 V54 A7 7 0 0 1 55 54 V57 H51 V54 A3 3 0 0 0 45 54 V57 Z"
         />
-        <path
-            class="fill-background"
-            d="M42 36.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"
-        />
-        <path
+        <rect
             class="fill-primary"
-            d="M48 46.75a7.25 7.25 0 0 0-4.25 13.12V65h8.5v-5.13A7.25 7.25 0 0 0 48 46.75Zm0 4.5a2.75 2.75 0 0 1 1.13 5.26l-1.13.51-1.13-.51A2.75 2.75 0 0 1 48 51.25Z"
+            x="41"
+            y="57"
+            width="14"
+            height="12"
+            rx="3"
         />
+        <circle class="fill-background" cx="48" cy="61" r="1.8" />
+        <path class="fill-background" d="M47.2 62h1.6l-0.8 3z" />
     </svg>
 </template>
