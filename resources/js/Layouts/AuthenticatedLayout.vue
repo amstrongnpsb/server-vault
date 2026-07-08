@@ -20,6 +20,12 @@ import {
 } from "@/Components/ui/sidebar";
 import { Link } from "@inertiajs/vue3";
 import { LayoutDashboard, Server, Users } from "lucide-vue-next";
+import { useTheme } from "@/composables/useTheme";
+import { onMounted, Teleport, watch } from "vue";
+import { usePage } from "@inertiajs/vue3";
+import { toast } from "vue-sonner";
+
+const page = usePage();
 
 const menuItems = [
     {
@@ -41,11 +47,30 @@ const menuItems = [
         activePattern: "servers.*",
     },
 ];
+
+// Get current theme for toast notifications
+const { currentTheme, initTheme } = useTheme();
+
+// Initialize theme on mount
+onMounted(() => {
+    initTheme();
+});
 </script>
 
 <template>
+    <Toaster
+        :theme="currentTheme"
+        position="top-right"
+        :close-button="true"
+        :rich-colors="true"
+        :toast-options="{
+            classes: {
+                toast: 'rounded-md shadow-md p-4 w-[356px]',
+                title: 'font-medium',
+            },
+        }"
+    />
     <SidebarProvider>
-        <Toaster />
         <Sidebar>
             <SidebarHeader>
                 <Link

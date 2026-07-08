@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('name');
             $table->string('host'); // IP address or hostname
-            $table->enum('os', ['Ubuntu', 'Debian', 'CentOS', 'Windows', 'Other']);
+            $table->string('os'); // Operating system (allows custom names)
             $table->enum('status', ['Online', 'Offline'])->default('Offline');
             $table->text('description')->nullable();
             $table->integer('port')->default(22); // SSH port

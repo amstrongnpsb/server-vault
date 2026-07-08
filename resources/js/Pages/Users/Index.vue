@@ -62,7 +62,6 @@ import {
     X,
 } from "lucide-vue-next";
 import { ref, computed, watch } from "vue";
-import { toast } from "vue-sonner";
 import { debounce } from "lodash-es";
 
 const props = defineProps({
@@ -71,7 +70,6 @@ const props = defineProps({
     filters: Object,
 });
 
-const page = usePage();
 const deleteDialogOpen = ref(false);
 const userToDelete = ref(null);
 const search = ref(props.filters?.search || "");
@@ -85,15 +83,6 @@ const selectedRole = ref(
           : [],
 );
 const isLoading = ref(false);
-
-// Show success/error messages
-if (page.props.flash?.success) {
-    toast.success(page.props.flash.success);
-}
-
-if (page.props.flash?.error) {
-    toast.error(page.props.flash.error);
-}
 
 const openDeleteDialog = (user) => {
     userToDelete.value = user;

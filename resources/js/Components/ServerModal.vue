@@ -22,7 +22,7 @@ import {
     DialogTitle,
 } from "@/Components/ui/dialog";
 import { X, Key, Lock } from "lucide-vue-next";
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { toast } from "vue-sonner";
 
 const props = defineProps({
@@ -53,46 +53,97 @@ const emit = defineEmits(["update:open", "saved"]);
 // Authentication method state
 const authMethod = ref("password");
 
+// Custom OS name for "Other" option
+const customOsName = ref("");
+const showCustomOsInput = computed(() => form.os === "Other");
+
 // Form setup
 const form = useForm({
-    name: props.server?.name || "",
-    host: props.server?.host || "",
-    port: props.server?.port || 22,
-    os: props.server?.os || "",
-    status: props.server?.status || "Offline",
-    username: props.server?.username || "",
-    credentials: props.server?.credentials || "",
-    description: props.server?.description || "",
+    name: "",
+    host: "",
+    port: 22,
+    os: "",
+    status: "Offline",
+    username: "",
+    credentials: "",
+    description: "",
 });
+
+// Initialize form data
+const initializeForm = (server = null) => {
+    if (server) {
+        // Edit mode - populate with server data
+        form.name = server.name || "";
+        form.host = server.host || "";
+        form.port = server.port || 22;
+        form.os = server.os || "";
+        form.status = server.status || "Offline";
+        form.username = server.username || "";
+        form.credentials = server.credentials || "";
+        form.description = server.description || "";
+        
+        // Check if OS is a custom one (not in standard options)
+        const standardOs = ['Ubuntu', 'Debian', 'CentOS', 'Windows', 'Other'];
+        if (server.os && !standardOs.includes(server.os)) {
+            customOsName.value = server.os;
+            form.os = "Other";
+        } else {
+            customOsName.value = "";
+        }
+        
+        // Set auth method based on credentials type
+        if (server.credentials && server.credentials.includes('-----BEGIN')) {
+            authMethod.value = "private_key";
+        } else {
+            authMethod.value = "password";
+        }
+    } else {
+        // Create mode - reset to defaults
+        form.name = "";
+        form.host = "";
+        form.port = 22;
+        form.os = "";
+        form.status = "Offline";
+        form.username = "";
+        form.credentials = "";
+        form.description = "";
+        authMethod.value = "password";
+        customOsName.value = "";
+    }
+    
+    // Clear any existing errors
+    form.clearErrors();
+};
 
 // Watch for server prop changes (when editing)
 watch(
     () => props.server,
     (newServer) => {
-        if (newServer) {
-            form.name = newServer.name || "";
-            form.host = newServer.host || "";
-            form.port = newServer.port || 22;
-            form.os = newServer.os || "";
-            form.status = newServer.status || "Offline";
-            form.username = newServer.username || "";
-            form.credentials = newServer.credentials || "";
-            form.description = newServer.description || "";
+        if (props.open && props.isEdit && newServer) {
+            initializeForm(newServer);
         }
     },
-    { immediate: true },
+    { immediate: true }
 );
 
 // Reset form when modal opens/closes
 watch(
     () => props.open,
     (isOpen) => {
-        if (!isOpen) {
+        if (isOpen) {
+            // Modal opening - initialize based on mode
+            if (props.isEdit && props.server) {
+                initializeForm(props.server);
+            } else {
+                initializeForm(); // Create mode
+            }
+        } else {
+            // Modal closing - reset form
             form.reset();
             form.clearErrors();
             authMethod.value = "password";
         }
-    },
+    }
 );
 
 const closeModal = () => {
@@ -100,6 +151,22 @@ const closeModal = () => {
 };
 
 const testAndSave = () => {
+    // If "Other" is selected and custom OS name is provided, use it
+    if (form.os === "Other" && customOsName.value.trim()) {
+        form.os = customOsName.value.trim();
+    }
+
+    // Debug: Log form data before submitting
+    console.log('Form data before submit:', {
+        name: form.name,
+        host: form.host,
+        port: form.port,
+        os: form.os,
+        status: form.status,
+        username: form.username,
+        description: form.description,
+    });
+
     const url = props.isEdit
         ? route("servers.update", props.server.id)
         : route("servers.store");
@@ -119,6 +186,10 @@ const testAndSave = () => {
         },
         onError: (errors) => {
             console.error("Form errors:", errors);
+            // Reset OS back to "Other" if validation fails
+            if (customOsName.value.trim()) {
+                form.os = "Other";
+            }
         },
     });
 };
@@ -218,17 +289,21 @@ const handleAuthMethodChange = (method) => {
                         <Label class="text-sm font-medium">
                             Operating system
                         </Label>
-                        <Select v-model="form.os">
+                        <Select 
+                            :model-value="form.os" 
+                            @update:model-value="(value) => form.os = value"
+                        >
                             <SelectTrigger
                                 :class="[
                                     'w-full',
                                     { 'border-destructive': form.errors.os },
                                 ]"
                             >
-                                <SelectValue placeholder="Ubuntu" />
+                                <SelectValue placeholder="Select OS" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
+                                    <SelectLabel>Operating System</SelectLabel>
                                     <SelectItem
                                         v-for="os in osOptions"
                                         :key="os"
@@ -266,6 +341,25 @@ const handleAuthMethodChange = (method) => {
                             {{ form.errors.username }}
                         </p>
                     </div>
+                </div>
+
+                <!-- Custom OS Name (shown when Other is selected) -->
+                <div v-if="showCustomOsInput" class="space-y-2">
+                    <Label for="customOsName" class="text-sm font-medium">
+                        Custom OS Name
+                    </Label>
+                    <Input
+                        id="customOsName"
+                        v-model="customOsName"
+                        type="text"
+                        placeholder="e.g., FreeBSD, Alpine, Arch Linux"
+                        :class="{
+                            'border-destructive': showCustomOsInput && !customOsName.trim(),
+                        }"
+                    />
+                    <p class="text-xs text-muted-foreground">
+                        Enter the specific operating system name
+                    </p>
                 </div>
 
                 <!-- Authentication Method -->
@@ -340,7 +434,10 @@ const handleAuthMethodChange = (method) => {
                 <!-- Status (for edit mode) -->
                 <div v-if="isEdit" class="space-y-2">
                     <Label class="text-sm font-medium">Status</Label>
-                    <Select v-model="form.status">
+                    <Select 
+                        :model-value="form.status" 
+                        @update:model-value="(value) => form.status = value"
+                    >
                         <SelectTrigger
                             :class="{
                                 'border-destructive': form.errors.status,
@@ -350,6 +447,7 @@ const handleAuthMethodChange = (method) => {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
+                                <SelectLabel>Status</SelectLabel>
                                 <SelectItem
                                     v-for="status in statusOptions"
                                     :key="status"

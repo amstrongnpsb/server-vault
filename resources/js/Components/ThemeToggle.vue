@@ -1,45 +1,12 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { onMounted } from 'vue';
 import { Moon, Sun } from 'lucide-vue-next';
+import { useTheme } from '@/composables/useTheme';
 
-const storageKey = 'server-vault-theme';
-const theme = ref('light');
-
-const prefersDark = () =>
-    window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
-
-const applyTheme = (value) => {
-    const nextTheme =
-        value === 'system' ? (prefersDark() ? 'dark' : 'light') : value;
-
-    document.documentElement.classList.toggle('dark', nextTheme === 'dark');
-};
-
-const isDark = computed(() => {
-    if (theme.value === 'system') {
-        return prefersDark();
-    }
-
-    return theme.value === 'dark';
-});
-
-const toggleTheme = () => {
-    theme.value = isDark.value ? 'light' : 'dark';
-    localStorage.setItem(storageKey, theme.value);
-    applyTheme(theme.value);
-};
+const { isDark, toggleTheme, initTheme } = useTheme();
 
 onMounted(() => {
-    theme.value = localStorage.getItem(storageKey) || 'system';
-    applyTheme(theme.value);
-
-    window
-        .matchMedia?.('(prefers-color-scheme: dark)')
-        .addEventListener('change', () => {
-            if (theme.value === 'system') {
-                applyTheme(theme.value);
-            }
-        });
+    initTheme();
 });
 </script>
 

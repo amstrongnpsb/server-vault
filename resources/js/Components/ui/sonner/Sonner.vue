@@ -2,11 +2,12 @@
 import {
   CircleCheckIcon,
   InfoIcon,
-  Loader2Icon,
-  OctagonXIcon,
   TriangleAlertIcon,
+  OctagonXIcon,
+  Loader2Icon,
   XIcon,
 } from "@lucide/vue";
+
 import { Toaster as Sonner } from "vue-sonner";
 import { cn } from "@/lib/utils";
 

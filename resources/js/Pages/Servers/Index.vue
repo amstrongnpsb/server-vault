@@ -53,6 +53,7 @@ import {
     DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
 import { Badge } from "@/Components/ui/badge";
+import OsIcon from "@/Components/OsIcon.vue";
 import {
     MoreHorizontal,
     Pencil,
@@ -65,7 +66,6 @@ import {
     Monitor,
 } from "lucide-vue-next";
 import { ref, computed, watch } from "vue";
-import { toast } from "vue-sonner";
 import { debounce } from "lodash-es";
 
 const props = defineProps({
@@ -75,7 +75,6 @@ const props = defineProps({
     filters: Object,
 });
 
-const page = usePage();
 const deleteDialogOpen = ref(false);
 const serverToDelete = ref(null);
 const search = ref(props.filters?.search || "");
@@ -104,15 +103,6 @@ const selectedStatus = ref(
 );
 
 const isLoading = ref(false);
-
-// Show success/error messages
-if (page.props.flash?.success) {
-    toast.success(page.props.flash.success);
-}
-
-if (page.props.flash?.error) {
-    toast.error(page.props.flash.error);
-}
 
 const openDeleteDialog = (server) => {
     serverToDelete.value = server;
@@ -155,8 +145,12 @@ const closeEditModal = () => {
 };
 
 const handleServerSaved = () => {
-    // Refresh the server list
-    router.reload({ only: ["servers"] });
+    // Refresh the server list without flashing
+    router.reload({
+        only: ["servers"],
+        preserveScroll: true,
+        preserveState: true,
+    });
 };
 
 // Search functionality
@@ -265,7 +259,6 @@ const getStatusBadgeClass = (status) => {
         <template #header>
             <h1 class="truncate text-lg font-semibold">Server management</h1>
         </template>
-
         <div class="px-4 py-8 sm:px-6 lg:px-8">
             <div class="space-y-4">
                 <!-- Header Section with Add Button -->
@@ -431,7 +424,7 @@ const getStatusBadgeClass = (status) => {
                                 <!-- Loading State with Skeleton -->
                                 <template v-if="isLoading">
                                     <TableRow
-                                        v-for="i in 5"
+                                        v-for="i in 10"
                                         :key="`skeleton-${i}`"
                                     >
                                         <TableCell class="font-medium">
@@ -526,8 +519,9 @@ const getStatusBadgeClass = (status) => {
                                             <div
                                                 class="flex items-center gap-2"
                                             >
-                                                <Server
-                                                    class="h-4 w-4 text-muted-foreground"
+                                                <OsIcon
+                                                    :os="server.os"
+                                                    size="h-4 w-4"
                                                 />
                                                 {{ server.os }}
                                             </div>

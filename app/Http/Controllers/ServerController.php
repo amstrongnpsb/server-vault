@@ -66,7 +66,7 @@ class ServerController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'host' => 'required|string|max:255',
-            'os' => 'required|in:' . implode(',', Server::getOsOptions()),
+            'os' => 'required|string|max:255',
             'status' => 'required|in:' . implode(',', Server::getStatusOptions()),
             'description' => 'nullable|string',
             'port' => 'required|integer|min:1|max:65535',
@@ -110,7 +110,7 @@ class ServerController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'host' => 'required|string|max:255',
-            'os' => 'required|in:' . implode(',', Server::getOsOptions()),
+            'os' => 'required|string|max:255',
             'status' => 'required|in:' . implode(',', Server::getStatusOptions()),
             'description' => 'nullable|string',
             'port' => 'required|integer|min:1|max:65535',
