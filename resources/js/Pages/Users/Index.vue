@@ -2,6 +2,8 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
+import FadeIn from "@/Components/FadeIn.vue";
 import {
     Table,
     TableBody,
@@ -44,20 +46,25 @@ import {
     MoreHorizontal,
     Pencil,
     Plus,
+    Search,
     Trash2,
     UserCircle,
+    X,
 } from "lucide-vue-next";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { toast } from "vue-sonner";
+import { debounce } from "lodash-es";
 
 const props = defineProps({
     users: Object,
     roles: Array,
+    filters: Object,
 });
 
 const page = usePage();
 const deleteDialogOpen = ref(false);
 const userToDelete = ref(null);
+const search = ref(props.filters?.search || "");
 
 // Show success/error messages
 if (page.props.flash?.success) {
@@ -96,6 +103,27 @@ const getRoleBadgeClass = (roleName) => {
         user: "border-green-500",
     };
     return classes[roleName?.toLowerCase()] || "border-border text-foreground";
+};
+
+// Search functionality
+const performSearch = debounce(() => {
+    router.get(
+        route("users.index"),
+        { search: search.value },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        },
+    );
+}, 300);
+
+watch(search, () => {
+    performSearch();
+});
+
+const clearSearch = () => {
+    search.value = "";
 };
 
 // Pagination computed properties
@@ -137,31 +165,79 @@ const handlePageChange = (page) => {
         <div class="px-4 py-8 sm:px-6 lg:px-8">
             <div class="space-y-4">
                 <!-- Header Section with Add Button -->
-                <div
-                    class="rounded-md border border-border bg-card p-6 text-card-foreground shadow-sm"
-                >
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <h2 class="text-base font-semibold">
-                                User Management
-                            </h2>
-                            <p class="mt-2 text-sm text-muted-foreground">
-                                Manage application users, roles, and access.
-                                Total users: {{ users.total }}
-                            </p>
+                <FadeIn :delay="0.1">
+                    <div
+                        class="rounded-md border border-border bg-card p-6 text-card-foreground shadow-sm"
+                    >
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h2 class="text-base font-semibold">
+                                    User Management
+                                </h2>
+                                <p class="mt-2 text-sm text-muted-foreground">
+                                    Manage application users, roles, and access.
+                                    <span
+                                        v-if="search"
+                                        class="font-medium text-foreground"
+                                    >
+                                        {{ users.total }} result{{
+                                            users.total !== 1 ? "s" : ""
+                                        }}
+                                        found
+                                    </span>
+                                    <span v-else>
+                                        Total users: {{ users.total }}
+                                    </span>
+                                </p>
+                            </div>
+                            <Button
+                                as-child
+                                class="transition-all duration-200 hover:scale-105"
+                            >
+                                <Link :href="route('users.create')">
+                                    <Plus class="mr-2 h-4 w-4" />
+                                    Add User
+                                </Link>
+                            </Button>
                         </div>
-                        <Button as-child>
-                            <Link :href="route('users.create')">
-                                <Plus class="mr-2 h-4 w-4" />
-                                Add User
-                            </Link>
-                        </Button>
                     </div>
-                </div>
+                </FadeIn>
+
+                <!-- Search Filter - Minimalist & Elegant -->
+                <FadeIn :delay="0.2">
+                    <div class="flex items-center gap-3">
+                        <div class="relative flex-1 max-w-md">
+                            <Search
+                                class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors duration-200"
+                            />
+                            <Input
+                                v-model="search"
+                                type="text"
+                                placeholder="Search users..."
+                                class="pl-10 pr-10 transition-all duration-200 focus:pl-10 focus:pr-10 focus:ring-2"
+                            />
+                            <button
+                                v-if="search"
+                                @click="clearSearch"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-200 hover:text-foreground hover:scale-110"
+                            >
+                                <X class="h-4 w-4" />
+                            </button>
+                        </div>
+                        <div
+                            v-if="search"
+                            class="text-sm text-muted-foreground animate-fade-in"
+                        >
+                            Searching for "{{ search }}"
+                        </div>
+                    </div>
+                </FadeIn>
 
                 <!-- Users Table -->
-                <div class="rounded-md border border-border bg-card shadow-sm">
-                    <div class="overflow-hidden">
+                <FadeIn :delay="0.3">
+                    <div
+                        class="rounded-md border border-border bg-card shadow-sm overflow-hidden"
+                    >
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -178,14 +254,27 @@ const handlePageChange = (page) => {
                                 <TableRow v-if="users.data.length === 0">
                                     <TableCell
                                         colspan="5"
-                                        class="text-center text-muted-foreground"
+                                        class="text-center text-muted-foreground py-12"
                                     >
-                                        No users found.
+                                        <div
+                                            class="flex flex-col items-center gap-2"
+                                        >
+                                            <Search
+                                                class="h-12 w-12 text-muted-foreground/50"
+                                            />
+                                            <p class="text-base">
+                                                No users found
+                                            </p>
+                                            <p v-if="search" class="text-sm">
+                                                Try adjusting your search
+                                            </p>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                                 <TableRow
                                     v-for="user in users.data"
                                     :key="user.id"
+                                    class="transition-colors duration-200 hover:bg-muted/50"
                                 >
                                     <TableCell class="font-medium">
                                         <div class="flex items-center gap-2">
@@ -203,7 +292,7 @@ const handlePageChange = (page) => {
                                                 :key="role.id"
                                                 :variant="'outline'"
                                                 :class="[
-                                                    'rounded-sm px-2 py-1 text-xs font-medium',
+                                                    'rounded-sm px-2 py-1 text-xs font-medium transition-all duration-200 hover:scale-105',
                                                     getRoleBadgeClass(
                                                         role.name,
                                                     ),
@@ -235,6 +324,7 @@ const handlePageChange = (page) => {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
+                                                    class="transition-all duration-200 hover:scale-110"
                                                 >
                                                     <MoreHorizontal
                                                         class="h-4 w-4"
@@ -302,7 +392,7 @@ const handlePageChange = (page) => {
                                 @update:page="handlePageChange"
                                 :total="totalItems"
                                 :items-per-page="itemsPerPage"
-                                :sibling-count="1"
+                                :sibling-count="2"
                                 show-edges
                             >
                                 <PaginationContent v-slot="{ items }">
@@ -354,7 +444,7 @@ const handlePageChange = (page) => {
                             </Pagination>
                         </div>
                     </div>
-                </div>
+                </FadeIn>
             </div>
         </div>
 
