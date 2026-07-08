@@ -19,9 +19,16 @@ class UserController extends Controller
     public function index(): Response
     {
         $search = request('search');
+        $roleFilter = request('role');
+
+        // Convert comma-separated string to array if needed (for URL compatibility)
+        if (is_string($roleFilter) && !empty($roleFilter)) {
+            $roleFilter = explode(',', $roleFilter);
+        }
 
         $users = User::with('roles')
             ->search($search)
+            ->filterByRole($roleFilter)
             ->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
@@ -31,6 +38,7 @@ class UserController extends Controller
             'roles' => Role::all(['id', 'name']),
             'filters' => [
                 'search' => $search,
+                'role' => $roleFilter,
             ],
         ]);
     }

@@ -78,5 +78,28 @@ class User extends Authenticatable
               ->orWhere('email', 'like', "%{$search}%");
         });
     }
+
+    /**
+     * Scope a query to filter users by role(s).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string|array|null  $roles
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeFilterByRole($query, $roles)
+    {
+        if (empty($roles)) {
+            return $query;
+        }
+
+        // Handle both string and array inputs
+        if (is_string($roles)) {
+            $roles = [$roles];
+        }
+
+        return $query->whereHas('roles', function ($q) use ($roles) {
+            $q->whereIn('name', $roles);
+        });
+    }
 }
 

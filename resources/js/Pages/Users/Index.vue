@@ -24,6 +24,15 @@ import {
     PaginationPrevious,
 } from "@/Components/ui/pagination";
 import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/Components/ui/select";
+import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -65,6 +74,10 @@ const page = usePage();
 const deleteDialogOpen = ref(false);
 const userToDelete = ref(null);
 const search = ref(props.filters?.search || "");
+// Convert string to array if needed (when coming from URL)
+const initialRole = props.filters?.role || [];
+const selectedRole = ref(Array.isArray(initialRole) ? initialRole : (initialRole ? initialRole.split(',') : []));
+const isLoading = ref(false);
 
 // Show success/error messages
 if (page.props.flash?.success) {
@@ -107,13 +120,26 @@ const getRoleBadgeClass = (roleName) => {
 
 // Search functionality
 const performSearch = debounce(() => {
+    isLoading.value = true;
+    
+    // Convert array to comma-separated string for URL compatibility
+    const roleParam = selectedRole.value && selectedRole.value.length > 0 
+        ? selectedRole.value.join(',') 
+        : '';
+
     router.get(
         route("users.index"),
-        { search: search.value },
+        {
+            search: search.value,
+            role: roleParam,
+        },
         {
             preserveState: true,
             preserveScroll: true,
             replace: true,
+            onFinish: () => {
+                isLoading.value = false;
+            },
         },
     );
 }, 300);
@@ -122,8 +148,16 @@ watch(search, () => {
     performSearch();
 });
 
+watch(selectedRole, () => {
+    performSearch();
+});
+
 const clearSearch = () => {
     search.value = "";
+};
+
+const clearRoleFilter = () => {
+    selectedRole.value = [];
 };
 
 // Pagination computed properties
@@ -143,15 +177,26 @@ console.log("Pagination Debug:", {
 
 const handlePageChange = (page) => {
     console.log("Navigating to page:", page);
+    isLoading.value = true;
+    
+    // Convert array to comma-separated string for URL compatibility
+    const roleParam = selectedRole.value && selectedRole.value.length > 0 
+        ? selectedRole.value.join(',') 
+        : '';
+
     router.get(
         route("users.index"),
-        { 
+        {
             page: page,
-            search: search.value 
+            search: search.value,
+            role: roleParam,
         },
         {
             preserveState: true,
             preserveScroll: true,
+            onFinish: () => {
+                isLoading.value = false;
+            },
         },
     );
 };
@@ -227,11 +272,71 @@ const handlePageChange = (page) => {
                                 <X class="h-4 w-4" />
                             </button>
                         </div>
+
+                        <!-- Role Filter -->
+                        <div class="flex items-center gap-2">
+                            <Select v-model="selectedRole" multiple>
+                                <SelectTrigger class="w-64">
+                                    <SelectValue placeholder="Filter by roles" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Filter by Roles</SelectLabel>
+                                        <SelectItem
+                                            v-for="role in roles"
+                                            :key="role.id"
+                                            :value="role.name"
+                                        >
+                                            {{ role.name }}
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            <!-- Clear Role Filter Button -->
+                            <button
+                                v-if="selectedRole && selectedRole.length > 0"
+                                type="button"
+                                @click="clearRoleFilter"
+                                class="flex items-center justify-center w-8 h-8 text-muted-foreground transition-all duration-200 hover:text-foreground hover:scale-110 hover:bg-muted/50 rounded-md"
+                                title="Clear role filter"
+                            >
+                                <X class="h-4 w-4" />
+                            </button>
+                        </div>
+
                         <div
-                            v-if="search"
-                            class="text-sm text-muted-foreground animate-fade-in"
+                            v-if="search || (selectedRole && selectedRole.length > 0)"
+                            class="flex items-center gap-2 text-sm text-muted-foreground animate-fade-in"
                         >
-                            Searching for "{{ search }}"
+                            <div
+                                class="flex items-center gap-2 px-2 py-1 bg-muted/50 rounded-md"
+                            >
+                                <span v-if="search"
+                                    >Searching: "{{ search }}"</span
+                                >
+                                <span v-if="search && selectedRole && selectedRole.length > 0">•</span>
+                                <span
+                                    v-if="selectedRole && selectedRole.length > 0"
+                                    class="flex items-center gap-1"
+                                >
+                                    Roles:
+                                    <div class="flex flex-wrap gap-1">
+                                        <Badge 
+                                            v-for="role in selectedRole" 
+                                            :key="role"
+                                            variant="outline" 
+                                            class="text-xs"
+                                        >
+                                            {{ role }}
+                                        </Badge>
+                                    </div>
+                                </span>
+                                <span class="text-xs text-muted-foreground/80">
+                                    ({{ users.total }} result{{
+                                        users.total !== 1 ? "s" : ""
+                                    }})
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </FadeIn>
@@ -240,6 +345,7 @@ const handlePageChange = (page) => {
                 <FadeIn :delay="0.3">
                     <div
                         class="rounded-md border border-border bg-card shadow-sm overflow-hidden"
+                        :class="{ 'opacity-75': isLoading }"
                     >
                         <Table>
                             <TableHeader>
@@ -254,7 +360,24 @@ const handlePageChange = (page) => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                <TableRow v-if="users.data.length === 0">
+                                <!-- Loading State -->
+                                <TableRow v-if="isLoading">
+                                    <TableCell
+                                        colspan="5"
+                                        class="text-center text-muted-foreground py-8"
+                                    >
+                                        <div
+                                            class="flex items-center justify-center gap-2"
+                                        >
+                                            <div
+                                                class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"
+                                            ></div>
+                                            <span>Loading users...</span>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                                <!-- No Results State -->
+                                <TableRow v-else-if="users.data.length === 0">
                                     <TableCell
                                         colspan="5"
                                         class="text-center text-muted-foreground py-12"
@@ -268,13 +391,18 @@ const handlePageChange = (page) => {
                                             <p class="text-base">
                                                 No users found
                                             </p>
-                                            <p v-if="search" class="text-sm">
-                                                Try adjusting your search
+                                            <p
+                                                v-if="search || selectedRole"
+                                                class="text-sm"
+                                            >
+                                                Try adjusting your filters
                                             </p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
+                                <!-- User Data -->
                                 <TableRow
+                                    v-else
                                     v-for="user in users.data"
                                     :key="user.id"
                                     class="transition-colors duration-200 hover:bg-muted/50"
