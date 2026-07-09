@@ -12,21 +12,11 @@ class Server extends Model
     use HasFactory, HasUuids;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are not mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
-    protected $fillable = [
-        'name',
-        'host',
-        'os',
-        'status',
-        'description',
-        'port',
-        'username',
-        'credentials',
-        'last_checked_at',
-    ];
+    protected $guarded = ['id'];
 
     /**
      * The attributes that should be cast.
