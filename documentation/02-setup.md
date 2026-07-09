@@ -291,7 +291,7 @@ npm install axios
 Install xterm.js:
 
 ```bash
-npm install xterm xterm-addon-fit
+npm install @xterm/xterm @xterm/addon-fit
 ```
 
 Install motion-v:
