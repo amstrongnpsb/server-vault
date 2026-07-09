@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Server extends Model
 {
@@ -38,6 +39,22 @@ class Server extends Model
             'id' => 'string',
             'last_checked_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the databases for this server.
+     */
+    public function databases(): HasMany
+    {
+        return $this->hasMany(ServerDatabase::class);
+    }
+
+    /**
+     * Get the services for this server.
+     */
+    public function services(): HasMany
+    {
+        return $this->hasMany(ServerService::class);
     }
 
     /**
