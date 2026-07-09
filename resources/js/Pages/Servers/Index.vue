@@ -68,7 +68,6 @@ import {
     Trash2,
     Server,
     X,
-    Eye,
     Monitor,
 } from "lucide-vue-next";
 import { ref, computed, watch } from "vue";
@@ -557,22 +556,6 @@ const getStatusBadgeClass = (status) => {
                                                         >Actions</DropdownMenuLabel
                                                     >
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuItem as-child>
-                                                        <Link
-                                                            :href="
-                                                                route(
-                                                                    'servers.show',
-                                                                    server.id,
-                                                                )
-                                                            "
-                                                            class="flex w-full cursor-pointer items-center"
-                                                        >
-                                                            <Eye
-                                                                class="mr-2 h-4 w-4"
-                                                            />
-                                                            View
-                                                        </Link>
-                                                    </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         @click="
                                                             openEditModal(

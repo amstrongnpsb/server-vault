@@ -15,7 +15,9 @@ Route::get('/dashboard', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('users', App\Http\Controllers\UserController::class);
-    Route::resource('servers', App\Http\Controllers\ServerController::class);
+    Route::resource('servers', App\Http\Controllers\ServerController::class)->only([
+        'index', 'store', 'update', 'destroy'
+    ]);
 });
 
 Route::middleware('auth')->group(function () {

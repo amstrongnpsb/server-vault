@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreServerRequest;
+use App\Http\Requests\UpdateServerRequest;
 use App\Models\Server;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -48,77 +49,22 @@ class ServerController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create(): Response
-    {
-        return Inertia::render('Servers/Create', [
-            'osOptions' => Server::getOsOptions(),
-            'statusOptions' => Server::getStatusOptions(),
-        ]);
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreServerRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'host' => 'required|string|max:255',
-            'os' => 'required|string|max:255',
-            'status' => 'required|in:' . implode(',', Server::getStatusOptions()),
-            'description' => 'nullable|string',
-            'port' => 'required|integer|min:1|max:65535',
-            'username' => 'nullable|string|max:255',
-            'credentials' => 'nullable|string',
-        ]);
-
-        Server::create($validated);
+        Server::create($request->validated());
 
         return redirect()->route('servers.index')
             ->with('success', 'Server created successfully.');
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(Server $server): Response
-    {
-        return Inertia::render('Servers/Show', [
-            'server' => $server,
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Server $server): Response
-    {
-        return Inertia::render('Servers/Edit', [
-            'server' => $server,
-            'osOptions' => Server::getOsOptions(),
-            'statusOptions' => Server::getStatusOptions(),
-        ]);
-    }
-
-    /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Server $server): RedirectResponse
+    public function update(UpdateServerRequest $request, Server $server): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'host' => 'required|string|max:255',
-            'os' => 'required|string|max:255',
-            'status' => 'required|in:' . implode(',', Server::getStatusOptions()),
-            'description' => 'nullable|string',
-            'port' => 'required|integer|min:1|max:65535',
-            'username' => 'nullable|string|max:255',
-            'credentials' => 'nullable|string',
-        ]);
-
-        $server->update($validated);
+        $server->update($request->validated());
 
         return redirect()->route('servers.index')
             ->with('success', 'Server updated successfully.');
