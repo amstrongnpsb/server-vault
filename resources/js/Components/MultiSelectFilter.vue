@@ -40,7 +40,7 @@ const props = defineProps({
         default: true,
     },
     icon: {
-        type: Object,
+        type: [Object, Function],
         default: null,
     },
     maxBadges: {
@@ -49,7 +49,7 @@ const props = defineProps({
     },
     // Optional: component to render for each option icon
     optionIcon: {
-        type: Object,
+        type: [Object, Function],
         default: null,
     },
     // Optional: prop name to pass to option icon component
