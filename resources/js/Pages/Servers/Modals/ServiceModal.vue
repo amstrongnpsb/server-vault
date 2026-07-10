@@ -26,7 +26,7 @@ const emit = defineEmits(['update:open', 'saved']);
 
 const form = useForm({
     name: '',
-    port: '',
+    port: 80,
     username: '',
     credentials: '',
     description: '',
@@ -45,7 +45,7 @@ watch(
             } else {
                 form.defaults({
                     name: '',
-                    port: '',
+                    port: 80,
                     username: '',
                     credentials: '',
                     description: '',

@@ -100,6 +100,7 @@ const onSubmit = () => {
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
+                toast.success('Database updated successfully.');
                 emit('update:open', false);
                 emit('saved');
             },
@@ -116,6 +117,7 @@ const onSubmit = () => {
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
+                toast.success('Database created successfully.');
                 emit('update:open', false);
                 emit('saved');
             },

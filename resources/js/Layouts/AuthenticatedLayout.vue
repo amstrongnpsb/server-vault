@@ -58,19 +58,21 @@ onMounted(() => {
 </script>
 
 <template>
-    <Toaster
-        :theme="currentTheme"
-        position="top-right"
-        :close-button="true"
-        :rich-colors="true"
-        :style="{ '--z-index': 9999 }"
-        :toast-options="{
-            classes: {
-                toast: 'rounded-md shadow-md p-4 w-[356px]',
-                title: 'font-medium',
-            },
-        }"
-    />
+    <Teleport to="body">
+        <Toaster
+            :theme="currentTheme"
+            position="top-right"
+            :close-button="true"
+            :rich-colors="true"
+            :style="{ '--z-index': 9999 }"
+            :toast-options="{
+                classes: {
+                    toast: 'rounded-md shadow-md p-4 w-[356px]',
+                    title: 'font-medium',
+                },
+            }"
+        />
+    </Teleport>
     <SidebarProvider>
         <Sidebar>
             <SidebarHeader>

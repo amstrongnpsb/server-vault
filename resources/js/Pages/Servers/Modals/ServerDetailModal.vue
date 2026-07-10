@@ -1,6 +1,15 @@
 <script setup>
 import { ref, computed, reactive } from "vue";
 import { Dialog, DialogContent, DialogTitle } from "@/Components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/Components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Button } from "@/Components/ui/button";
 import {
@@ -93,13 +102,55 @@ const openEditDatabase = (database) => {
     databaseModalOpen.value = true;
 };
 
-const deleteDatabase = (id) => {
-    if (confirm("Are you sure you want to delete this database?")) {
+const deleteDialogOpen = ref(false);
+const itemToDelete = ref(null);
+const deleteType = ref(null);
+const isDeleting = ref(false);
+
+const confirmDelete = (type, item) => {
+    deleteType.value = type;
+    itemToDelete.value = item;
+    deleteDialogOpen.value = true;
+};
+
+const closeDeleteDialog = () => {
+    deleteDialogOpen.value = false;
+    itemToDelete.value = null;
+    deleteType.value = null;
+    isDeleting.value = false;
+};
+
+const executeDelete = () => {
+    if (!itemToDelete.value) return;
+    
+    isDeleting.value = true;
+    const id = itemToDelete.value.id;
+    
+    if (deleteType.value === 'database') {
         router.delete(route("servers.databases.destroy", id), {
             preserveState: true,
             preserveScroll: true,
-            onSuccess: () => toast.success("Database deleted successfully."),
-            onError: () => toast.error("Failed to delete database."),
+            onSuccess: () => {
+                toast.success("Database deleted successfully.");
+                closeDeleteDialog();
+            },
+            onError: () => {
+                toast.error("Failed to delete database.");
+                isDeleting.value = false;
+            },
+        });
+    } else if (deleteType.value === 'service') {
+        router.delete(route("servers.services.destroy", id), {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success("Service deleted successfully.");
+                closeDeleteDialog();
+            },
+            onError: () => {
+                toast.error("Failed to delete service.");
+                isDeleting.value = false;
+            },
         });
     }
 };
@@ -114,17 +165,6 @@ const openEditService = (service) => {
     isServiceEdit.value = true;
     serviceToEdit.value = service;
     serviceModalOpen.value = true;
-};
-
-const deleteService = (id) => {
-    if (confirm("Are you sure you want to delete this service?")) {
-        router.delete(route("servers.services.destroy", id), {
-            preserveState: true,
-            preserveScroll: true,
-            onSuccess: () => toast.success("Service deleted successfully."),
-            onError: () => toast.error("Failed to delete service."),
-        });
-    }
 };
 
 const handleHeaderAction = () => {
@@ -373,8 +413,9 @@ const getServiceIcon = (name) => {
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             @click="
-                                                                deleteDatabase(
-                                                                    db.id,
+                                                                confirmDelete(
+                                                                    'database',
+                                                                    db,
                                                                 )
                                                             "
                                                             class="text-destructive focus:text-destructive cursor-pointer"
@@ -538,8 +579,9 @@ const getServiceIcon = (name) => {
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             @click="
-                                                                deleteService(
-                                                                    svc.id,
+                                                                confirmDelete(
+                                                                    'service',
+                                                                    svc,
                                                                 )
                                                             "
                                                             class="text-destructive focus:text-destructive cursor-pointer"
@@ -576,4 +618,33 @@ const getServiceIcon = (name) => {
         :service="serviceToEdit"
         :is-edit="isServiceEdit"
     />
+
+    <!-- Delete Confirmation Dialog -->
+    <AlertDialog :open="deleteDialogOpen" @update:open="closeDeleteDialog">
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the {{ deleteType }}
+                    <strong>{{ itemToDelete?.name || 'Unnamed' }}</strong> and remove its data from the system.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel
+                    @click="closeDeleteDialog"
+                    :disabled="isDeleting"
+                >
+                    Cancel
+                </AlertDialogCancel>
+                <Button
+                    variant="destructive"
+                    @click="executeDelete"
+                    :disabled="isDeleting"
+                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                    {{ isDeleting ? "Deleting..." : "Delete" }}
+                </Button>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
 </template>
