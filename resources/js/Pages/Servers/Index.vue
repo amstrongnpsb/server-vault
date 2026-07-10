@@ -5,7 +5,7 @@ import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Skeleton } from "@/Components/ui/skeleton";
 import FadeIn from "@/Components/FadeIn.vue";
-import ServerModal from "@/Components/ServerModal.vue";
+import ServerModal from "./Modals/ServerModal.vue";
 import MultiSelectFilter from "@/Components/MultiSelectFilter.vue";
 import {
     Table,
@@ -60,6 +60,7 @@ import {
     PopoverTrigger,
 } from "@/Components/ui/popover";
 import OsIcon from "@/Components/OsIcon.vue";
+import { toast } from "vue-sonner";
 import {
     MoreHorizontal,
     Pencil,
@@ -76,6 +77,7 @@ import { debounce } from "lodash-es";
 const props = defineProps({
     servers: Object,
     osOptions: Array,
+    osOptionsWithOther: Array,
     statusOptions: Array,
     filters: Object,
 });
@@ -108,6 +110,7 @@ const selectedStatus = ref(
 );
 
 const isLoading = ref(false);
+const isDeleting = ref(false);
 
 const openDeleteDialog = (server) => {
     serverToDelete.value = server;
@@ -117,15 +120,44 @@ const openDeleteDialog = (server) => {
 const closeDeleteDialog = () => {
     deleteDialogOpen.value = false;
     serverToDelete.value = null;
+    isDeleting.value = false;
 };
 
 const deleteServer = () => {
-    if (!serverToDelete.value) return;
+    if (!serverToDelete.value) {
+        console.error("No server to delete");
+        return;
+    }
+
+    if (isDeleting.value) {
+        console.log("Already deleting, please wait...");
+        return;
+    }
+
+    console.log(
+        "Deleting server:",
+        serverToDelete.value.id,
+        serverToDelete.value.name,
+    );
+    isDeleting.value = true;
 
     router.delete(route("servers.destroy", serverToDelete.value.id), {
         preserveScroll: true,
-        onSuccess: () => {
+        onBefore: () => {
+            console.log("Delete request starting...");
+        },
+        onSuccess: (page) => {
+            console.log("Delete successful", page);
+            toast.success("Server deleted successfully!");
             closeDeleteDialog();
+        },
+        onError: (errors) => {
+            console.error("Delete error:", errors);
+            toast.error("Failed to delete server");
+            isDeleting.value = false;
+        },
+        onFinish: () => {
+            console.log("Delete request finished");
         },
     });
 };
@@ -673,7 +705,7 @@ const getStatusBadgeClass = (status) => {
         <!-- Create Server Modal -->
         <ServerModal
             v-model:open="createModalOpen"
-            :os-options="osOptions"
+            :os-options="osOptionsWithOther"
             :status-options="statusOptions"
             @saved="handleServerSaved"
         />
@@ -682,7 +714,7 @@ const getStatusBadgeClass = (status) => {
         <ServerModal
             v-model:open="editModalOpen"
             :server="serverToEdit"
-            :os-options="osOptions"
+            :os-options="osOptionsWithOther"
             :status-options="statusOptions"
             :is-edit="true"
             @saved="handleServerSaved"
@@ -703,15 +735,20 @@ const getStatusBadgeClass = (status) => {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel @click="closeDeleteDialog"
-                        >Cancel</AlertDialogCancel
+                    <AlertDialogCancel
+                        @click="closeDeleteDialog"
+                        :disabled="isDeleting"
                     >
-                    <AlertDialogAction
-                        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        Cancel
+                    </AlertDialogCancel>
+                    <Button
+                        variant="destructive"
                         @click="deleteServer"
+                        :disabled="isDeleting"
+                        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                        Delete
-                    </AlertDialogAction>
+                        {{ isDeleting ? "Deleting..." : "Delete" }}
+                    </Button>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

@@ -38,7 +38,8 @@ class ServerController extends Controller
 
         return Inertia::render('Servers/Index', [
             'servers' => $servers,
-            'osOptions' => Server::getOsOptions(),
+            'osOptions' => Server::getOsOptions(), // For filter - without "Other"
+            'osOptionsWithOther' => array_merge(Server::getOsOptions(), ['Other']), // For modal - with "Other"
             'statusOptions' => Server::getStatusOptions(),
             'filters' => [
                 'search' => $search,
