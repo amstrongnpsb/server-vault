@@ -29,6 +29,7 @@ class ServerController extends Controller
         }
 
         $servers = Server::query()
+            ->with(['databases', 'services'])
             ->search($search)
             ->filterByOs($osFilter)
             ->filterByStatus($statusFilter)

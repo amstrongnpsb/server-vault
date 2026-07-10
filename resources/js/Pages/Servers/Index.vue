@@ -6,6 +6,7 @@ import { Input } from "@/Components/ui/input";
 import { Skeleton } from "@/Components/ui/skeleton";
 import FadeIn from "@/Components/FadeIn.vue";
 import ServerModal from "./Modals/ServerModal.vue";
+import ServerDetailModal from "./Modals/ServerDetailModal.vue";
 import MultiSelectFilter from "@/Components/MultiSelectFilter.vue";
 import {
     Table,
@@ -70,6 +71,7 @@ import {
     Server,
     X,
     Monitor,
+    Eye,
 } from "lucide-vue-next";
 import { ref, computed, watch } from "vue";
 import { debounce } from "lodash-es";
@@ -90,6 +92,8 @@ const search = ref(props.filters?.search || "");
 const createModalOpen = ref(false);
 const editModalOpen = ref(false);
 const serverToEdit = ref(null);
+const detailModalOpen = ref(false);
+const serverToView = ref(null);
 
 // Convert filters to arrays if needed
 const initialOs = props.filters?.os || [];
@@ -171,6 +175,12 @@ const openEditModal = (server) => {
     serverToEdit.value = server;
     editModalOpen.value = true;
 };
+
+const openDetailModal = (server) => {
+    serverToView.value = server;
+    detailModalOpen.value = true;
+};
+
 const handleServerSaved = () => {
     // Refresh the server list without flashing
     router.reload({
@@ -590,6 +600,19 @@ const getStatusBadgeClass = (status) => {
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem
                                                         @click="
+                                                            openDetailModal(
+                                                                server,
+                                                            )
+                                                        "
+                                                        class="flex w-full cursor-pointer items-center"
+                                                    >
+                                                        <Eye
+                                                            class="mr-2 h-4 w-4"
+                                                        />
+                                                        Details
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        @click="
                                                             openEditModal(
                                                                 server,
                                                             )
@@ -718,6 +741,12 @@ const getStatusBadgeClass = (status) => {
             :status-options="statusOptions"
             :is-edit="true"
             @saved="handleServerSaved"
+        />
+
+        <!-- Server Detail Modal -->
+        <ServerDetailModal
+            v-model:open="detailModalOpen"
+            :server="serverToView"
         />
 
         <!-- Delete Confirmation Dialog -->

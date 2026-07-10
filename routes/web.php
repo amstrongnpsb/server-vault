@@ -18,6 +18,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('servers', App\Http\Controllers\ServerController::class)->only([
         'index', 'store', 'update', 'destroy'
     ]);
+
+    // Nested routes for Databases and Services
+    Route::post('/servers/{server}/databases', [App\Http\Controllers\ServerDatabaseController::class, 'store'])->name('servers.databases.store');
+    Route::put('/databases/{serverDatabase}', [App\Http\Controllers\ServerDatabaseController::class, 'update'])->name('servers.databases.update');
+    Route::delete('/databases/{serverDatabase}', [App\Http\Controllers\ServerDatabaseController::class, 'destroy'])->name('servers.databases.destroy');
+
+    Route::post('/servers/{server}/services', [App\Http\Controllers\ServerServiceController::class, 'store'])->name('servers.services.store');
+    Route::put('/services/{serverService}', [App\Http\Controllers\ServerServiceController::class, 'update'])->name('servers.services.update');
+    Route::delete('/services/{serverService}', [App\Http\Controllers\ServerServiceController::class, 'destroy'])->name('servers.services.destroy');
 });
 
 Route::middleware('auth')->group(function () {
