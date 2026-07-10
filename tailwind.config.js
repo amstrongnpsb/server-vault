@@ -14,6 +14,7 @@ export default {
     theme: {
         extend: {
             colors: {
+                active: "var(--active)",
                 border: "var(--border)",
                 input: "var(--input)",
                 ring: "var(--ring)",

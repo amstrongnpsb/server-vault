@@ -181,6 +181,28 @@ const openDetailModal = (server) => {
     detailModalOpen.value = true;
 };
 
+// Keep open modals in sync with fresh data from Inertia
+watch(
+    () => props.servers,
+    (newServers) => {
+        if (newServers && newServers.data) {
+            if (serverToView.value) {
+                const updatedServer = newServers.data.find((s) => s.id === serverToView.value.id);
+                if (updatedServer) {
+                    serverToView.value = updatedServer;
+                }
+            }
+            if (serverToEdit.value) {
+                const updatedServer = newServers.data.find((s) => s.id === serverToEdit.value.id);
+                if (updatedServer) {
+                    serverToEdit.value = updatedServer;
+                }
+            }
+        }
+    },
+    { deep: true }
+);
+
 const handleServerSaved = () => {
     // Refresh the server list without flashing
     router.reload({

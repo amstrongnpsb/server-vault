@@ -43,6 +43,13 @@ watch(
                 form.credentials = ''; // Leave password empty for edit
                 form.description = props.service.description || '';
             } else {
+                form.defaults({
+                    name: '',
+                    port: '',
+                    username: '',
+                    credentials: '',
+                    description: '',
+                });
                 form.reset();
             }
         }
@@ -55,6 +62,7 @@ const onSubmit = () => {
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
+                toast.success('Service updated successfully.');
                 emit('update:open', false);
                 emit('saved');
             },
@@ -68,6 +76,7 @@ const onSubmit = () => {
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
+                toast.success('Service created successfully.');
                 emit('update:open', false);
                 emit('saved');
             },

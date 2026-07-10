@@ -63,6 +63,7 @@ onMounted(() => {
         position="top-right"
         :close-button="true"
         :rich-colors="true"
+        :style="{ '--z-index': 9999 }"
         :toast-options="{
             classes: {
                 toast: 'rounded-md shadow-md p-4 w-[356px]',

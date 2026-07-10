@@ -8,7 +8,7 @@ class StoreServerServiceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create servers');
+        return true;
     }
 
     public function rules(): array

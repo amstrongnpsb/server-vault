@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, reactive } from "vue";
 import { Dialog, DialogContent, DialogTitle } from "@/Components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Button } from "@/Components/ui/button";
@@ -27,6 +27,10 @@ import {
     Component,
     Video,
     Zap,
+    Eye,
+    EyeOff,
+    Copy,
+    Check,
 } from "lucide-vue-next";
 import DatabaseModal from "./DatabaseModal.vue";
 import ServiceModal from "./ServiceModal.vue";
@@ -54,6 +58,28 @@ const isServiceEdit = ref(false);
 
 const dbCount = computed(() => props.server?.databases?.length || 0);
 const svcCount = computed(() => props.server?.services?.length || 0);
+
+// Password reveal state per row
+const revealedPasswords = reactive(new Set());
+const copiedPasswords = reactive(new Set());
+
+const togglePassword = (id) => {
+    if (revealedPasswords.has(id)) {
+        revealedPasswords.delete(id);
+    } else {
+        revealedPasswords.add(id);
+    }
+};
+
+const copyPassword = async (id, password) => {
+    try {
+        await navigator.clipboard.writeText(password);
+        copiedPasswords.add(id);
+        setTimeout(() => copiedPasswords.delete(id), 2000);
+    } catch {
+        // fallback
+    }
+};
 
 const openAddDatabase = () => {
     isDatabaseEdit.value = false;
@@ -135,11 +161,11 @@ const getServiceIcon = (name) => {
             <div v-if="server" class="flex flex-col h-full max-h-[85vh]">
                 <!-- Custom Header matching mockup -->
                 <div
-                    class="px-6 py-5 flex items-center justify-between border-b border-border bg-card"
+                    class="px-6 py-5 flex items-center justify-between border-b border-border"
                 >
                     <div class="flex items-center gap-4">
                         <div
-                            class="flex items-center justify-center h-12 w-12 rounded-lg bg-blue-900/40 text-blue-400"
+                            class="flex items-center justify-center h-12 w-12 rounded-lg bg-background"
                         >
                             <Server class="h-6 w-6" />
                         </div>
@@ -178,10 +204,10 @@ const getServiceIcon = (name) => {
                     >
                         <!-- Tabs matching the minimal line style in mockup -->
                         <div class="px-6 border-b border-border">
-                            <TabsList class="h-auto p-0 bg-transparent gap-6">
+                            <TabsList class="h-auto p-0 bg-transparent gap-2">
                                 <TabsTrigger
                                     value="databases"
-                                    class="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground rounded-none border-b-2 border-transparent px-0 py-3 font-semibold text-muted-foreground hover:text-foreground"
+                                    class="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-active data-[state=active]:text-foreground rounded-none border-0 border-b-2 border-transparent px-4 py-3 font-semibold text-muted-foreground hover:text-foreground"
                                 >
                                     Databases
                                     <span
@@ -191,7 +217,7 @@ const getServiceIcon = (name) => {
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="services"
-                                    class="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground rounded-none border-b-2 border-transparent px-0 py-3 font-semibold text-muted-foreground hover:text-foreground"
+                                    class="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-active data-[state=active]:text-foreground rounded-none border-0 border-b-2 border-transparent px-4 py-3 font-semibold text-muted-foreground hover:text-foreground"
                                 >
                                     Services
                                     <span
@@ -224,6 +250,9 @@ const getServiceIcon = (name) => {
                                                 >Username</TableHead
                                             >
                                             <TableHead class="font-medium h-10"
+                                                >Password</TableHead
+                                            >
+                                            <TableHead class="font-medium h-10"
                                                 >Created</TableHead
                                             >
                                             <TableHead
@@ -237,7 +266,7 @@ const getServiceIcon = (name) => {
                                             class="border-border"
                                         >
                                             <TableCell
-                                                colspan="6"
+                                                colspan="7"
                                                 class="text-center py-10 text-muted-foreground"
                                             >
                                                 No databases configured for this
@@ -275,6 +304,32 @@ const getServiceIcon = (name) => {
                                             <TableCell class="font-semibold">{{
                                                 db.username || "—"
                                             }}</TableCell>
+                                            <TableCell>
+                                                <div v-if="db.decrypted_credentials" class="flex items-center gap-1.5">
+                                                    <code class="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
+                                                        {{ revealedPasswords.has(db.id) ? db.decrypted_credentials : '••••••••' }}
+                                                    </code>
+                                                    <button
+                                                        type="button"
+                                                        @click="togglePassword(db.id)"
+                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                                        :title="revealedPasswords.has(db.id) ? 'Hide' : 'Reveal'"
+                                                    >
+                                                        <EyeOff v-if="revealedPasswords.has(db.id)" class="h-3.5 w-3.5" />
+                                                        <Eye v-else class="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        @click="copyPassword(db.id, db.decrypted_credentials)"
+                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                                        title="Copy password"
+                                                    >
+                                                        <Check v-if="copiedPasswords.has(db.id)" class="h-3.5 w-3.5 text-green-500" />
+                                                        <Copy v-else class="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                                <span v-else class="text-muted-foreground">—</span>
+                                            </TableCell>
                                             <TableCell
                                                 class="text-muted-foreground"
                                                 >{{
@@ -355,6 +410,9 @@ const getServiceIcon = (name) => {
                                                 >Username</TableHead
                                             >
                                             <TableHead class="font-medium h-10"
+                                                >Password</TableHead
+                                            >
+                                            <TableHead class="font-medium h-10"
                                                 >Description</TableHead
                                             >
                                             <TableHead class="font-medium h-10"
@@ -371,7 +429,7 @@ const getServiceIcon = (name) => {
                                             class="border-border"
                                         >
                                             <TableCell
-                                                colspan="6"
+                                                colspan="7"
                                                 class="text-center py-10 text-muted-foreground"
                                             >
                                                 No services configured for this
@@ -404,6 +462,32 @@ const getServiceIcon = (name) => {
                                             <TableCell class="font-semibold">{{
                                                 svc.username || "—"
                                             }}</TableCell>
+                                            <TableCell>
+                                                <div v-if="svc.decrypted_credentials" class="flex items-center gap-1.5">
+                                                    <code class="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
+                                                        {{ revealedPasswords.has(svc.id) ? svc.decrypted_credentials : '••••••••' }}
+                                                    </code>
+                                                    <button
+                                                        type="button"
+                                                        @click="togglePassword(svc.id)"
+                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                                        :title="revealedPasswords.has(svc.id) ? 'Hide' : 'Reveal'"
+                                                    >
+                                                        <EyeOff v-if="revealedPasswords.has(svc.id)" class="h-3.5 w-3.5" />
+                                                        <Eye v-else class="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        @click="copyPassword(svc.id, svc.decrypted_credentials)"
+                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                                        title="Copy password"
+                                                    >
+                                                        <Check v-if="copiedPasswords.has(svc.id)" class="h-3.5 w-3.5 text-green-500" />
+                                                        <Copy v-else class="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                                <span v-else class="text-muted-foreground">—</span>
+                                            </TableCell>
                                             <TableCell
                                                 class="text-muted-foreground max-w-[200px] truncate"
                                                 :title="svc.description"
