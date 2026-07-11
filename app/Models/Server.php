@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Crypt;
 
 class Server extends Model
 {
@@ -17,6 +18,13 @@ class Server extends Model
      * @var list<string>
      */
     protected $guarded = ['id'];
+
+    /**
+     * The attributes that should be appended to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['decrypted_credentials'];
 
     /**
      * The attributes that should be cast.
@@ -143,5 +151,21 @@ class Server extends Model
             'Windows' => 'windows-icon',
             default => 'server-icon',
         };
+    }
+
+    /**
+     * Get the decrypted credentials.
+     */
+    public function getDecryptedCredentialsAttribute(): ?string
+    {
+        if (empty($this->credentials)) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($this->credentials);
+        } catch (\Exception $e) {
+            return $this->credentials;
+        }
     }
 }

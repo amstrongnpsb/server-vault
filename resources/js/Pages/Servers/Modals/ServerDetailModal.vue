@@ -235,12 +235,35 @@ const getServiceIcon = (name) => {
                             <h2 class="text-xl font-semibold tracking-tight">
                                 {{ server.name }}
                             </h2>
-                            <p
-                                class="text-sm text-muted-foreground font-medium mt-0.5"
+                            <div
+                                class="text-sm text-muted-foreground font-medium mt-0.5 flex items-center gap-2 flex-wrap"
                             >
-                                {{ server.host || server.ip_address }} &middot;
-                                {{ server.os }}
-                            </p>
+                                <span>{{ server.host || server.ip_address }} &middot; {{ server.os }}</span>
+                                <span v-if="server.username">&middot; {{ server.username }}</span>
+                                <div v-if="server.decrypted_credentials" class="flex items-center gap-1.5">
+                                    <code class="text-xs bg-muted/50 px-1.5 py-0.5 rounded font-mono">
+                                        {{ revealedPasswords.has(server.id) ? server.decrypted_credentials : '••••••••' }}
+                                    </code>
+                                    <button
+                                        type="button"
+                                        @click="togglePassword(server.id)"
+                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                        :title="revealedPasswords.has(server.id) ? 'Hide' : 'Reveal'"
+                                    >
+                                        <EyeOff v-if="revealedPasswords.has(server.id)" class="h-3.5 w-3.5" />
+                                        <Eye v-else class="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="copyPassword(server.id, server.decrypted_credentials)"
+                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                        title="Copy password"
+                                    >
+                                        <Check v-if="copiedPasswords.has(server.id)" class="h-3.5 w-3.5 text-green-500" />
+                                        <Copy v-else class="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
