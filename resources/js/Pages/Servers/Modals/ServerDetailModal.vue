@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, reactive } from "vue";
+import { ref, computed, reactive, watch } from "vue";
 import { Dialog, DialogContent, DialogTitle } from "@/Components/ui/dialog";
 import {
     AlertDialog,
@@ -40,11 +40,14 @@ import {
     EyeOff,
     Copy,
     Check,
+    RefreshCw,
 } from "lucide-vue-next";
 import DatabaseModal from "./DatabaseModal.vue";
 import ServiceModal from "./ServiceModal.vue";
 import { router } from "@inertiajs/vue3";
 import { toast } from "vue-sonner";
+import { Skeleton } from "@/Components/ui/skeleton";
+import { useServerDetails } from "@/composables/useServerDetails";
 
 const props = defineProps({
     open: Boolean,
@@ -65,8 +68,16 @@ const serviceModalOpen = ref(false);
 const serviceToEdit = ref(null);
 const isServiceEdit = ref(false);
 
-const dbCount = computed(() => props.server?.databases?.length || 0);
-const svcCount = computed(() => props.server?.services?.length || 0);
+const { databases, services, isLoading, fetchDetails, invalidateCache } = useServerDetails();
+
+const dbCount = computed(() => databases.value?.length || 0);
+const svcCount = computed(() => services.value?.length || 0);
+
+watch(() => props.open, (isOpen) => {
+    if (isOpen && props.server?.id) {
+        fetchDetails(props.server.id);
+    }
+});
 
 // Password reveal state per row
 const revealedPasswords = reactive(new Set());
@@ -132,6 +143,8 @@ const executeDelete = () => {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success("Database deleted successfully.");
+                invalidateCache(props.server.id);
+                fetchDetails(props.server.id, true);
                 closeDeleteDialog();
             },
             onError: () => {
@@ -145,6 +158,8 @@ const executeDelete = () => {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success("Service deleted successfully.");
+                invalidateCache(props.server.id);
+                fetchDetails(props.server.id, true);
                 closeDeleteDialog();
             },
             onError: () => {
@@ -179,6 +194,13 @@ const formatDate = (dateString) => {
     if (!dateString) return "—";
     const d = new Date(dateString);
     return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+};
+
+const handleSaved = () => {
+    if (props.server?.id) {
+        invalidateCache(props.server.id);
+        fetchDetails(props.server.id, true);
+    }
 };
 
 const getServiceIcon = (name) => {
@@ -221,7 +243,17 @@ const getServiceIcon = (name) => {
                             </p>
                         </div>
                     </div>
-                    <div>
+                    <div class="flex items-center gap-2">
+                        <Button
+                            @click="fetchDetails(server.id, true)"
+                            variant="outline"
+                            size="icon"
+                            class="bg-background text-foreground hover:bg-muted font-medium"
+                            :disabled="isLoading"
+                            title="Refresh data"
+                        >
+                            <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': isLoading }" />
+                        </Button>
                         <Button
                             @click="handleHeaderAction"
                             variant="outline"
@@ -301,8 +333,19 @@ const getServiceIcon = (name) => {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
+                                        <template v-if="isLoading">
+                                            <TableRow v-for="i in 3" :key="`db-skeleton-${i}`" class="border-border">
+                                                <TableCell class="pl-6"><div class="flex items-center gap-3"><Skeleton class="h-4 w-4" /><Skeleton class="h-4 w-[120px]" /></div></TableCell>
+                                                <TableCell><Skeleton class="h-4 w-[80px]" /></TableCell>
+                                                <TableCell><Skeleton class="h-4 w-[40px]" /></TableCell>
+                                                <TableCell><Skeleton class="h-4 w-[80px]" /></TableCell>
+                                                <TableCell><Skeleton class="h-4 w-[100px]" /></TableCell>
+                                                <TableCell><Skeleton class="h-4 w-[60px]" /></TableCell>
+                                                <TableCell class="pr-6"><Skeleton class="h-8 w-8 rounded-md ml-auto" /></TableCell>
+                                            </TableRow>
+                                        </template>
                                         <TableRow
-                                            v-if="dbCount === 0"
+                                            v-else-if="dbCount === 0"
                                             class="border-border"
                                         >
                                             <TableCell
@@ -314,7 +357,7 @@ const getServiceIcon = (name) => {
                                             </TableCell>
                                         </TableRow>
                                         <TableRow
-                                            v-for="db in server.databases"
+                                            v-for="db in databases"
                                             :key="db.id"
                                             class="border-border group transition-colors hover:bg-muted/50"
                                         >
@@ -465,8 +508,19 @@ const getServiceIcon = (name) => {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
+                                        <template v-if="isLoading">
+                                            <TableRow v-for="i in 3" :key="`svc-skeleton-${i}`" class="border-border">
+                                                <TableCell class="pl-6"><div class="flex items-center gap-3"><Skeleton class="h-4 w-4" /><Skeleton class="h-4 w-[120px]" /></div></TableCell>
+                                                <TableCell><Skeleton class="h-4 w-[40px]" /></TableCell>
+                                                <TableCell><Skeleton class="h-4 w-[80px]" /></TableCell>
+                                                <TableCell><Skeleton class="h-4 w-[100px]" /></TableCell>
+                                                <TableCell><Skeleton class="h-4 w-[150px]" /></TableCell>
+                                                <TableCell><Skeleton class="h-4 w-[60px]" /></TableCell>
+                                                <TableCell class="pr-6"><Skeleton class="h-8 w-8 rounded-md ml-auto" /></TableCell>
+                                            </TableRow>
+                                        </template>
                                         <TableRow
-                                            v-if="svcCount === 0"
+                                            v-else-if="svcCount === 0"
                                             class="border-border"
                                         >
                                             <TableCell
@@ -478,7 +532,7 @@ const getServiceIcon = (name) => {
                                             </TableCell>
                                         </TableRow>
                                         <TableRow
-                                            v-for="svc in server.services"
+                                            v-for="svc in services"
                                             :key="svc.id"
                                             class="border-border group transition-colors hover:bg-muted/50"
                                         >
@@ -610,6 +664,7 @@ const getServiceIcon = (name) => {
         :server="server"
         :database="databaseToEdit"
         :is-edit="isDatabaseEdit"
+        @saved="handleSaved"
     />
 
     <ServiceModal
@@ -617,6 +672,7 @@ const getServiceIcon = (name) => {
         :server="server"
         :service="serviceToEdit"
         :is-edit="isServiceEdit"
+        @saved="handleSaved"
     />
 
     <!-- Delete Confirmation Dialog -->

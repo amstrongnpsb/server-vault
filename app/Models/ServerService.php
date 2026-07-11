@@ -57,8 +57,5 @@ class ServerService extends Model
         }
     }
 
-    /**
-     * The accessors to append to the model's array form.
-     */
-    protected $appends = ['decrypted_credentials'];
+
 }

@@ -29,7 +29,6 @@ class ServerController extends Controller
         }
 
         $servers = Server::query()
-            ->with(['databases', 'services'])
             ->search($search)
             ->filterByOs($osFilter)
             ->filterByStatus($statusFilter)
@@ -81,5 +80,26 @@ class ServerController extends Controller
 
         return redirect()->route('servers.index')
             ->with('success', 'Server deleted successfully.');
+    }
+
+    /**
+     * Get server details (databases and services) for the detail modal.
+     */
+    public function details(Server $server): \Illuminate\Http\JsonResponse
+    {
+        $cacheKey = "server_details_{$server->id}";
+
+        if (request()->boolean('force')) {
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+        }
+
+        $details = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($server) {
+            return [
+                'databases' => $server->databases()->get()->append('decrypted_credentials'),
+                'services' => $server->services()->get()->append('decrypted_credentials'),
+            ];
+        });
+
+        return response()->json($details);
     }
 }

@@ -20,6 +20,7 @@ class ServerDatabaseController extends Controller
         }
 
         $server->databases()->create($validated);
+        \Illuminate\Support\Facades\Cache::forget("server_details_{$server->id}");
 
         return back()->with('success', 'Database added successfully.');
     }
@@ -32,13 +33,12 @@ class ServerDatabaseController extends Controller
             if (!empty($validated['credentials'])) {
                 $validated['credentials'] = Crypt::encryptString($validated['credentials']);
             } else {
-                if ($validated['credentials'] !== null) {
-                    $validated['credentials'] = Crypt::encryptString($validated['credentials']);
-                }
+                unset($validated['credentials']);
             }
         }
 
         $serverDatabase->update($validated);
+        \Illuminate\Support\Facades\Cache::forget("server_details_{$serverDatabase->server_id}");
 
         return back()->with('success', 'Database updated successfully.');
     }
@@ -46,6 +46,7 @@ class ServerDatabaseController extends Controller
     public function destroy(ServerDatabase $serverDatabase): RedirectResponse
     {
         $serverDatabase->delete();
+        \Illuminate\Support\Facades\Cache::forget("server_details_{$serverDatabase->server_id}");
 
         return back()->with('success', 'Database deleted successfully.');
     }

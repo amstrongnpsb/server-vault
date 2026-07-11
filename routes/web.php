@@ -18,6 +18,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('servers', App\Http\Controllers\ServerController::class)->only([
         'index', 'store', 'update', 'destroy'
     ]);
+    Route::get('/servers/{server}/details', [App\Http\Controllers\ServerController::class, 'details'])->name('servers.details');
 
     // Nested routes for Databases and Services
     Route::post('/servers/{server}/databases', [App\Http\Controllers\ServerDatabaseController::class, 'store'])->name('servers.databases.store');

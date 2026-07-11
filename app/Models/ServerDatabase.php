@@ -57,8 +57,5 @@ class ServerDatabase extends Model
         }
     }
 
-    /**
-     * The accessors to append to the model's array form.
-     */
-    protected $appends = ['decrypted_credentials'];
+
 }
