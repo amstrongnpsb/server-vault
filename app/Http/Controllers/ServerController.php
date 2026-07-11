@@ -95,11 +95,34 @@ class ServerController extends Controller
 
         $details = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($server) {
             return [
-                'databases' => $server->databases()->get()->append('decrypted_credentials'),
-                'services' => $server->services()->get()->append('decrypted_credentials'),
+                'databases' => $server->databases()->get(),
+                'services' => $server->services()->get(),
             ];
         });
 
         return response()->json($details);
+    }
+
+    /**
+     * Reveal credentials securely via explicit API request
+     */
+    public function revealCredential(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'type' => 'required|in:server,database,service',
+            'id' => 'required|uuid'
+        ]);
+
+        $modelClass = match ($request->type) {
+            'server' => \App\Models\Server::class,
+            'database' => \App\Models\ServerDatabase::class,
+            'service' => \App\Models\ServerService::class,
+        };
+
+        $model = $modelClass::findOrFail($request->id);
+
+        return response()->json([
+            'password' => $model->decrypted_credentials
+        ]);
     }
 }

@@ -20,6 +20,13 @@ class ServerService extends Model
     protected $guarded = ['id'];
 
     /**
+     * The attributes that should be appended to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['has_credentials'];
+
+    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
@@ -39,6 +46,14 @@ class ServerService extends Model
     public function server(): BelongsTo
     {
         return $this->belongsTo(Server::class);
+    }
+
+    /**
+     * Check if the service has credentials.
+     */
+    public function getHasCredentialsAttribute(): bool
+    {
+        return !empty($this->credentials);
     }
 
     /**

@@ -46,6 +46,7 @@ import DatabaseModal from "./DatabaseModal.vue";
 import ServiceModal from "./ServiceModal.vue";
 import { router } from "@inertiajs/vue3";
 import { toast } from "vue-sonner";
+import axios from "axios";
 import { Skeleton } from "@/Components/ui/skeleton";
 import { useServerDetails } from "@/composables/useServerDetails";
 
@@ -80,24 +81,49 @@ watch(() => props.open, (isOpen) => {
 });
 
 // Password reveal state per row
-const revealedPasswords = reactive(new Set());
+// Password reveal state per row
+const revealedPasswords = ref({});
 const copiedPasswords = reactive(new Set());
+const isLoadingPassword = ref({});
 
-const togglePassword = (id) => {
-    if (revealedPasswords.has(id)) {
-        revealedPasswords.delete(id);
-    } else {
-        revealedPasswords.add(id);
+const togglePassword = async (type, id) => {
+    if (revealedPasswords.value[id] !== undefined) {
+        delete revealedPasswords.value[id];
+        return;
+    }
+
+    try {
+        isLoadingPassword.value[id] = true;
+        const response = await axios.post(route('credentials.reveal'), { type, id });
+        revealedPasswords.value[id] = response.data.password;
+    } catch (e) {
+        toast.error('Failed to reveal password');
+    } finally {
+        isLoadingPassword.value[id] = false;
     }
 };
 
-const copyPassword = async (id, password) => {
+const copyPassword = async (type, id) => {
+    let password = revealedPasswords.value[id];
+    if (password === undefined) {
+        try {
+            isLoadingPassword.value[id] = true;
+            const response = await axios.post(route('credentials.reveal'), { type, id });
+            password = response.data.password;
+        } catch (e) {
+            toast.error('Failed to copy password');
+            return;
+        } finally {
+            isLoadingPassword.value[id] = false;
+        }
+    }
+
     try {
         await navigator.clipboard.writeText(password);
         copiedPasswords.add(id);
         setTimeout(() => copiedPasswords.delete(id), 2000);
     } catch {
-        // fallback
+        toast.error('Failed to copy to clipboard');
     }
 };
 
@@ -240,23 +266,26 @@ const getServiceIcon = (name) => {
                             >
                                 <span>{{ server.host || server.ip_address }} &middot; {{ server.os }}</span>
                                 <span v-if="server.username">&middot; {{ server.username }}</span>
-                                <div v-if="server.decrypted_credentials" class="flex items-center gap-1.5">
-                                    <code class="text-xs bg-muted/50 px-1.5 py-0.5 rounded font-mono">
-                                        {{ revealedPasswords.has(server.id) ? server.decrypted_credentials : '••••••••' }}
+                                <div v-if="server.has_credentials" class="flex items-center gap-1.5">
+                                    <code class="text-xs bg-muted/50 px-1.5 py-0.5 rounded font-mono min-w-[4rem]">
+                                        <span v-if="isLoadingPassword[server.id]">...</span>
+                                        <span v-else>{{ revealedPasswords[server.id] !== undefined ? revealedPasswords[server.id] : '••••••••' }}</span>
                                     </code>
                                     <button
                                         type="button"
-                                        @click="togglePassword(server.id)"
-                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
-                                        :title="revealedPasswords.has(server.id) ? 'Hide' : 'Reveal'"
+                                        @click="togglePassword('server', server.id)"
+                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
+                                        :disabled="isLoadingPassword[server.id]"
+                                        :title="revealedPasswords[server.id] !== undefined ? 'Hide' : 'Reveal'"
                                     >
-                                        <EyeOff v-if="revealedPasswords.has(server.id)" class="h-3.5 w-3.5" />
+                                        <EyeOff v-if="revealedPasswords[server.id] !== undefined" class="h-3.5 w-3.5" />
                                         <Eye v-else class="h-3.5 w-3.5" />
                                     </button>
                                     <button
                                         type="button"
-                                        @click="copyPassword(server.id, server.decrypted_credentials)"
-                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                        @click="copyPassword('server', server.id)"
+                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
+                                        :disabled="isLoadingPassword[server.id]"
                                         title="Copy password"
                                     >
                                         <Check v-if="copiedPasswords.has(server.id)" class="h-3.5 w-3.5 text-green-500" />
@@ -411,30 +440,33 @@ const getServiceIcon = (name) => {
                                                 db.username || "—"
                                             }}</TableCell>
                                             <TableCell>
-                                                <div v-if="db.decrypted_credentials" class="flex items-center gap-1.5">
-                                                    <code class="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
-                                                        {{ revealedPasswords.has(db.id) ? db.decrypted_credentials : '••••••••' }}
+                                                <div v-if="db.has_credentials" class="flex items-center gap-1.5">
+                                                    <code class="text-xs bg-muted/50 px-1.5 py-0.5 rounded font-mono min-w-[4rem]">
+                                                        <span v-if="isLoadingPassword[db.id]">...</span>
+                                                        <span v-else>{{ revealedPasswords[db.id] !== undefined ? revealedPasswords[db.id] : '••••••••' }}</span>
                                                     </code>
                                                     <button
                                                         type="button"
-                                                        @click="togglePassword(db.id)"
-                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
-                                                        :title="revealedPasswords.has(db.id) ? 'Hide' : 'Reveal'"
+                                                        @click="togglePassword('database', db.id)"
+                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
+                                                        :disabled="isLoadingPassword[db.id]"
+                                                        :title="revealedPasswords[db.id] !== undefined ? 'Hide' : 'Reveal'"
                                                     >
-                                                        <EyeOff v-if="revealedPasswords.has(db.id)" class="h-3.5 w-3.5" />
+                                                        <EyeOff v-if="revealedPasswords[db.id] !== undefined" class="h-3.5 w-3.5" />
                                                         <Eye v-else class="h-3.5 w-3.5" />
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        @click="copyPassword(db.id, db.decrypted_credentials)"
-                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                                        @click="copyPassword('database', db.id)"
+                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
+                                                        :disabled="isLoadingPassword[db.id]"
                                                         title="Copy password"
                                                     >
                                                         <Check v-if="copiedPasswords.has(db.id)" class="h-3.5 w-3.5 text-green-500" />
                                                         <Copy v-else class="h-3.5 w-3.5" />
                                                     </button>
                                                 </div>
-                                                <span v-else class="text-muted-foreground">—</span>
+                                                <span v-else class="text-muted-foreground px-1.5">—</span>
                                             </TableCell>
                                             <TableCell
                                                 class="text-muted-foreground"
@@ -581,30 +613,33 @@ const getServiceIcon = (name) => {
                                                 svc.username || "—"
                                             }}</TableCell>
                                             <TableCell>
-                                                <div v-if="svc.decrypted_credentials" class="flex items-center gap-1.5">
-                                                    <code class="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
-                                                        {{ revealedPasswords.has(svc.id) ? svc.decrypted_credentials : '••••••••' }}
+                                                <div v-if="svc.has_credentials" class="flex items-center gap-1.5">
+                                                    <code class="text-xs bg-muted/50 px-1.5 py-0.5 rounded font-mono min-w-[4rem]">
+                                                        <span v-if="isLoadingPassword[svc.id]">...</span>
+                                                        <span v-else>{{ revealedPasswords[svc.id] !== undefined ? revealedPasswords[svc.id] : '••••••••' }}</span>
                                                     </code>
                                                     <button
                                                         type="button"
-                                                        @click="togglePassword(svc.id)"
-                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
-                                                        :title="revealedPasswords.has(svc.id) ? 'Hide' : 'Reveal'"
+                                                        @click="togglePassword('service', svc.id)"
+                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
+                                                        :disabled="isLoadingPassword[svc.id]"
+                                                        :title="revealedPasswords[svc.id] !== undefined ? 'Hide' : 'Reveal'"
                                                     >
-                                                        <EyeOff v-if="revealedPasswords.has(svc.id)" class="h-3.5 w-3.5" />
+                                                        <EyeOff v-if="revealedPasswords[svc.id] !== undefined" class="h-3.5 w-3.5" />
                                                         <Eye v-else class="h-3.5 w-3.5" />
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        @click="copyPassword(svc.id, svc.decrypted_credentials)"
-                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                                        @click="copyPassword('service', svc.id)"
+                                                        class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
+                                                        :disabled="isLoadingPassword[svc.id]"
                                                         title="Copy password"
                                                     >
                                                         <Check v-if="copiedPasswords.has(svc.id)" class="h-3.5 w-3.5 text-green-500" />
                                                         <Copy v-else class="h-3.5 w-3.5" />
                                                     </button>
                                                 </div>
-                                                <span v-else class="text-muted-foreground">—</span>
+                                                <span v-else class="text-muted-foreground px-1.5">—</span>
                                             </TableCell>
                                             <TableCell
                                                 class="text-muted-foreground max-w-[200px] truncate"

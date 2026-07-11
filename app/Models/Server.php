@@ -24,7 +24,7 @@ class Server extends Model
      *
      * @var array
      */
-    protected $appends = ['decrypted_credentials'];
+    protected $appends = ['has_credentials'];
 
     /**
      * The attributes that should be cast.
@@ -151,6 +151,14 @@ class Server extends Model
             'Windows' => 'windows-icon',
             default => 'server-icon',
         };
+    }
+
+    /**
+     * Check if the server has credentials.
+     */
+    public function getHasCredentialsAttribute(): bool
+    {
+        return !empty($this->credentials);
     }
 
     /**
