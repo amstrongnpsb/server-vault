@@ -104,10 +104,32 @@ const submit = () => {
             <FadeIn :delay="0.4">
                 <PrimaryButton
                     class="w-full justify-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                    :class="{ 'opacity-25 animate-pulse': form.processing }"
+                    :class="{
+                        'opacity-25 disabled:hover:scale-100': form.processing,
+                    }"
                     :disabled="form.processing"
                 >
-                    Sign in
+                    <svg
+                        v-if="form.processing"
+                        class="me-2 h-4 w-4 animate-spin"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <circle
+                            class="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="4"
+                        />
+                        <path
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        />
+                    </svg>
+                    {{ form.processing ? "Signing in..." : "Sign in" }}
                 </PrimaryButton>
             </FadeIn>
 
