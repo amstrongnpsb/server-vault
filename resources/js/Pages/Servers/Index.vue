@@ -187,20 +187,24 @@ watch(
     (newServers) => {
         if (newServers && newServers.data) {
             if (serverToView.value) {
-                const updatedServer = newServers.data.find((s) => s.id === serverToView.value.id);
+                const updatedServer = newServers.data.find(
+                    (s) => s.id === serverToView.value.id,
+                );
                 if (updatedServer) {
                     serverToView.value = updatedServer;
                 }
             }
             if (serverToEdit.value) {
-                const updatedServer = newServers.data.find((s) => s.id === serverToEdit.value.id);
+                const updatedServer = newServers.data.find(
+                    (s) => s.id === serverToEdit.value.id,
+                );
                 if (updatedServer) {
                     serverToEdit.value = updatedServer;
                 }
             }
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 const handleServerSaved = () => {
@@ -647,7 +651,7 @@ const getStatusBadgeClass = (status) => {
                                                         Edit
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
-                                                        class="text-destructive focus:text-destructive"
+                                                        class="text-destructive focus:text-destructive cursor-pointer"
                                                         @click="
                                                             openDeleteDialog(
                                                                 server,

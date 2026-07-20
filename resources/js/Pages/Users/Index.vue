@@ -5,6 +5,7 @@ import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import FadeIn from "@/Components/FadeIn.vue";
 import MultiSelectFilter from "@/Components/MultiSelectFilter.vue";
+import UserModal from "./Modals/UserModal.vue";
 import {
     Table,
     TableBody,
@@ -26,7 +27,6 @@ import {
 } from "@/Components/ui/pagination";
 import {
     AlertDialog,
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
@@ -56,6 +56,7 @@ import {
 } from "lucide-vue-next";
 import { ref, computed, watch } from "vue";
 import { debounce } from "lodash-es";
+import { toast } from "vue-sonner";
 
 const props = defineProps({
     users: Object,
@@ -65,6 +66,7 @@ const props = defineProps({
 
 const deleteDialogOpen = ref(false);
 const userToDelete = ref(null);
+const isDeleting = ref(false);
 const search = ref(props.filters?.search || "");
 // Convert string to array if needed (when coming from URL)
 const initialRole = props.filters?.role || [];
@@ -75,12 +77,51 @@ const selectedRole = ref(
           ? initialRole.split(",")
           : [],
 );
+const createModalOpen = ref(false);
+const editModalOpen = ref(false);
+const userToEdit = ref(null);
+
 const isLoading = ref(false);
 
 // Convert roles array to simple string array for MultiSelectFilter
 const roleOptions = computed(() => {
     return props.roles.map((role) => role.name);
 });
+
+// Modal functions
+const openCreateModal = () => {
+    createModalOpen.value = true;
+};
+
+const openEditModal = (user) => {
+    userToEdit.value = user;
+    editModalOpen.value = true;
+};
+
+watch(
+    () => props.users,
+    (newUsers) => {
+        if (newUsers && newUsers.data) {
+            if (userToEdit.value) {
+                const updatedUser = newUsers.data.find(
+                    (u) => u.id === userToEdit.value.id,
+                );
+                if (updatedUser) {
+                    userToEdit.value = updatedUser;
+                }
+            }
+        }
+    },
+    { deep: true },
+);
+
+const handleUserSaved = () => {
+    router.reload({
+        only: ["users"],
+        preserveScroll: true,
+        preserveState: true,
+    });
+};
 
 const openDeleteDialog = (user) => {
     userToDelete.value = user;
@@ -90,15 +131,28 @@ const openDeleteDialog = (user) => {
 const closeDeleteDialog = () => {
     deleteDialogOpen.value = false;
     userToDelete.value = null;
+    isDeleting.value = false;
 };
 
 const deleteUser = () => {
     if (!userToDelete.value) return;
 
+    if (isDeleting.value) return;
+
+    isDeleting.value = true;
+
     router.delete(route("users.destroy", userToDelete.value.id), {
         preserveScroll: true,
         onSuccess: () => {
+            toast.success("User deleted successfully!");
             closeDeleteDialog();
+        },
+        onError: () => {
+            toast.error("Failed to delete user");
+            isDeleting.value = false;
+        },
+        onFinish: () => {
+            isDeleting.value = false;
         },
     });
 };
@@ -236,13 +290,11 @@ const handlePageChange = (page) => {
                                 </p>
                             </div>
                             <Button
-                                as-child
+                                @click="openCreateModal"
                                 class="transition-all duration-200 hover:scale-105"
                             >
-                                <Link :href="route('users.create')">
-                                    <Plus class="mr-2 h-4 w-4" />
-                                    Add User
-                                </Link>
+                                <Plus class="mr-2 h-4 w-4" />
+                                Add User
                             </Button>
                         </div>
                     </div>
@@ -434,24 +486,17 @@ const handlePageChange = (page) => {
                                                     >Actions</DropdownMenuLabel
                                                 >
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem as-child>
-                                                    <Link
-                                                        :href="
-                                                            route(
-                                                                'users.edit',
-                                                                user.id,
-                                                            )
-                                                        "
-                                                        class="flex w-full cursor-pointer items-center"
-                                                    >
-                                                        <Pencil
-                                                            class="mr-2 h-4 w-4"
-                                                        />
-                                                        Edit
-                                                    </Link>
+                                                <DropdownMenuItem
+                                                    class="cursor-pointer"
+                                                    @click="openEditModal(user)"
+                                                >
+                                                    <Pencil
+                                                        class="mr-2 h-4 w-4"
+                                                    />
+                                                    Edit
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    class="text-destructive focus:text-destructive"
+                                                    class="text-destructive focus:text-destructive cursor-pointer"
                                                     @click="
                                                         openDeleteDialog(user)
                                                     "
@@ -548,6 +593,22 @@ const handlePageChange = (page) => {
             </div>
         </div>
 
+        <!-- Create User Modal -->
+        <UserModal
+            v-model:open="createModalOpen"
+            :roles="roles"
+            @saved="handleUserSaved"
+        />
+
+        <!-- Edit User Modal -->
+        <UserModal
+            v-model:open="editModalOpen"
+            :user="userToEdit"
+            :roles="roles"
+            :is-edit="true"
+            @saved="handleUserSaved"
+        />
+
         <!-- Delete Confirmation Dialog -->
         <AlertDialog :open="deleteDialogOpen" @update:open="closeDeleteDialog">
             <AlertDialogContent>
@@ -563,15 +624,20 @@ const handlePageChange = (page) => {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel @click="closeDeleteDialog"
-                        >Cancel</AlertDialogCancel
+                    <AlertDialogCancel
+                        @click="closeDeleteDialog"
+                        :disabled="isDeleting"
                     >
-                    <AlertDialogAction
-                        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        Cancel
+                    </AlertDialogCancel>
+                    <Button
+                        variant="destructive"
                         @click="deleteUser"
+                        :disabled="isDeleting"
+                        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                        Delete
-                    </AlertDialogAction>
+                        {{ isDeleting ? "Deleting..." : "Delete" }}
+                    </Button>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

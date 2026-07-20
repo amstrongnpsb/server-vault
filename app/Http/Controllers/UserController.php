@@ -44,16 +44,6 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create(): Response
-    {
-        return Inertia::render('Users/Create', [
-            'roles' => Role::all(['id', 'name']),
-        ]);
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(StoreUserRequest $request): RedirectResponse
@@ -72,22 +62,6 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', 'User created successfully.');
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(User $user): Response
-    {
-        return Inertia::render('Users/Edit', [
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'roles' => $user->roles->pluck('name')->toArray(),
-            ],
-            'roles' => Role::all(['id', 'name']),
-        ]);
     }
 
     /**
