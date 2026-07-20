@@ -25,6 +25,7 @@ class RoleSeeder extends Seeder
             'manage permissions',
             'view reports',
             'export data',
+            'connect servers',
         ];
 
         foreach ($permissions as $permission) {

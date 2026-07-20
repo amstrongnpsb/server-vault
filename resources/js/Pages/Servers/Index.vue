@@ -637,32 +637,49 @@ const getStatusBadgeClass = (status) => {
                                                         />
                                                         Details
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        @click="
-                                                            openEditModal(
-                                                                server,
+                                                <DropdownMenuItem as-child>
+                                                    <Link
+                                                        :href="
+                                                            route(
+                                                                'servers.terminal',
+                                                                server.id,
                                                             )
                                                         "
                                                         class="flex w-full cursor-pointer items-center"
                                                     >
-                                                        <Pencil
+                                                        <Monitor
                                                             class="mr-2 h-4 w-4"
                                                         />
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        class="text-destructive focus:text-destructive cursor-pointer"
-                                                        @click="
-                                                            openDeleteDialog(
-                                                                server,
-                                                            )
-                                                        "
-                                                    >
-                                                        <Trash2
-                                                            class="mr-2 h-4 w-4"
-                                                        />
-                                                        Delete
-                                                    </DropdownMenuItem>
+                                                        Connect
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    @click="
+                                                        openEditModal(
+                                                            server,
+                                                        )
+                                                    "
+                                                    class="flex w-full cursor-pointer items-center"
+                                                >
+                                                    <Pencil
+                                                        class="mr-2 h-4 w-4"
+                                                    />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    class="text-destructive focus:text-destructive cursor-pointer"
+                                                    @click="
+                                                        openDeleteDialog(
+                                                            server,
+                                                        )
+                                                    "
+                                                >
+                                                    <Trash2
+                                                        class="mr-2 h-4 w-4"
+                                                    />
+                                                    Delete
+                                                </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>

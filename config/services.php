@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'ssh_bridge' => [
+        'ws_url' => env('SSH_BRIDGE_WS_URL', 'ws://localhost:8090'),
+        'control_url' => env('SSH_BRIDGE_CONTROL_URL', 'http://127.0.0.1:8091'),
+        'internal_secret' => env('SSH_BRIDGE_INTERNAL_SECRET'),
+    ],
+
 ];

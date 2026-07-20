@@ -4,6 +4,7 @@ import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Textarea } from "@/Components/ui/textarea";
+import axios from "axios";
 import {
     Select,
     SelectContent,
@@ -21,7 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/Components/ui/dialog";
-import { X, Key, Lock } from "lucide-vue-next";
+import { X, Key, Lock, Eye, EyeOff } from "lucide-vue-next";
 import { ref, watch, computed } from "vue";
 import { toast } from "vue-sonner";
 
@@ -52,6 +53,7 @@ const emit = defineEmits(["update:open", "saved"]);
 
 // Authentication method state
 const authMethod = ref("password");
+const showPassword = ref(false);
 
 // Custom OS name for "Other" option
 const customOsName = ref("");
@@ -70,7 +72,7 @@ const form = useForm({
 });
 
 // Initialize form data
-const initializeForm = (server = null) => {
+const initializeForm = async (server = null) => {
     if (server) {
         // Edit mode - populate with server data
         form.name = server.name || "";
@@ -79,7 +81,7 @@ const initializeForm = (server = null) => {
         form.os = server.os || "";
         form.status = server.status || "Offline";
         form.username = server.username || "";
-        form.credentials = server.credentials || "";
+        form.credentials = "";
         form.description = server.description || "";
         
         // Check if OS is a custom one (not in standard options)
@@ -94,8 +96,19 @@ const initializeForm = (server = null) => {
         // Set auth method based on credentials type
         if (server.credentials && server.credentials.includes('-----BEGIN')) {
             authMethod.value = "private_key";
+            form.credentials = server.credentials;
         } else {
             authMethod.value = "password";
+            // Fetch decrypted credentials for password mode
+            try {
+                const { data } = await axios.post(route('credentials.reveal'), {
+                    type: 'server',
+                    id: server.id,
+                });
+                form.credentials = data.password || '';
+            } catch {
+                form.credentials = '';
+            }
         }
     } else {
         // Create mode - reset to defaults
@@ -408,20 +421,37 @@ const handleAuthMethodChange = (method) => {
                                 : "Private key"
                         }}
                     </Label>
-                    <component
-                        :is="authMethod === 'password' ? Input : Textarea"
+                    <div
+                        v-if="authMethod === 'password'"
+                        class="relative"
+                    >
+                        <Input
+                            id="credentials"
+                            v-model="form.credentials"
+                            :type="showPassword ? 'text' : 'password'"
+                            placeholder="Enter password"
+                            :class="{
+                                'border-destructive': form.errors.credentials,
+                            }"
+                        />
+                        <button
+                            type="button"
+                            @click="showPassword = !showPassword"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                        >
+                            <Eye v-if="!showPassword" class="h-4 w-4" />
+                            <EyeOff v-else class="h-4 w-4" />
+                        </button>
+                    </div>
+                    <Textarea
+                        v-else
                         id="credentials"
                         v-model="form.credentials"
-                        :type="authMethod === 'password' ? 'password' : 'text'"
-                        :placeholder="
-                            authMethod === 'password'
-                                ? 'Enter password'
-                                : 'Enter private key'
-                        "
+                        placeholder="Enter private key"
+                        rows="4"
                         :class="{
                             'border-destructive': form.errors.credentials,
                         }"
-                        :rows="authMethod === 'private_key' ? 4 : undefined"
                     />
                     <p
                         v-if="form.errors.credentials"

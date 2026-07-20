@@ -40,7 +40,7 @@ npm run dev
 
 ## Why Hybrid Development?
 
-**Docker** runs: PHP, Nginx, MySQL, Redis, Queue, Reverb  
+**Docker** runs: PHP, Nginx, MySQL, Redis, Queue, Reverb, SSH Bridge  
 **Native** runs: Vite dev server
 
 **Reason:** Docker on Windows is slow for file watching. Running Vite natively = instant hot reload.
@@ -87,6 +87,18 @@ REDIS_HOST=redis
 # ❌ Wrong
 DB_HOST=localhost
 REDIS_HOST=127.0.0.1
+```
+
+### SSH Bridge Configuration
+
+The SSH terminal bridge runs as a separate service and is proxied through nginx at `/terminal-ws`:
+- **Dev:** `ssh-bridge` container, proxied via nginx → `ws://localhost:9002/terminal-ws`
+- **Prod:** `ssh-bridge` container, proxied via nginx at `/terminal-ws`
+
+Required `.env` variable:
+```env
+SSH_BRIDGE_INTERNAL_SECRET=your-secret-key    # Must match config/services.php
+SSH_BRIDGE_WS_URL=ws://localhost:9002/terminal-ws  # Frontend WebSocket URL
 ```
 
 ### Change Application Port
@@ -208,7 +220,7 @@ npm run artisan:prod:optimize
 
 | | Development | Production |
 |---|---|---|
-| Containers | 6 separate | 5 combined |
+| Containers | 7 separate | 6 combined |
 | Vite | Native (hot reload) | Pre-built assets |
 | Opcache | Off | On |
 | Debug | On | Off |
@@ -226,6 +238,7 @@ npm run artisan:prod:optimize
 - **redis** - Redis 7 (port 6379)
 - **reverb** - WebSocket server (port 8080)
 - **queue** - Background jobs
+- **ssh-bridge** - SSH terminal bridge (port 8090, proxied via nginx at `/terminal-ws`)
 
 ### Production Containers
 
@@ -234,6 +247,7 @@ npm run artisan:prod:optimize
 - **queue** - Background jobs
 - **db** - MySQL 8 (internal)
 - **redis** - Redis 7 (internal)
+- **ssh-bridge** - SSH terminal bridge (proxied via nginx at `/terminal-ws`)
 
 ---
 

@@ -23,6 +23,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/servers/{server}/details', [App\Http\Controllers\ServerController::class, 'details'])->name('servers.details');
     Route::post('/credentials/reveal', [App\Http\Controllers\ServerController::class, 'revealCredential'])->name('credentials.reveal');
 
+    Route::get('/servers/{server}/terminal', [App\Http\Controllers\SshTerminalController::class, 'show'])->name('servers.terminal');
+    Route::post('/servers/{server}/connect', [App\Http\Controllers\SshTerminalController::class, 'connect'])->name('servers.connect');
+    Route::post('/ssh/disconnect', [App\Http\Controllers\SshTerminalController::class, 'disconnect'])->name('ssh.disconnect');
+
     // Nested routes for Databases and Services
     Route::post('/servers/{server}/databases', [App\Http\Controllers\ServerDatabaseController::class, 'store'])->name('servers.databases.store');
     Route::put('/databases/{serverDatabase}', [App\Http\Controllers\ServerDatabaseController::class, 'update'])->name('servers.databases.update');

@@ -6,6 +6,7 @@ use App\Http\Requests\StoreServerRequest;
 use App\Http\Requests\UpdateServerRequest;
 use App\Models\Server;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Crypt;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -54,7 +55,13 @@ class ServerController extends Controller
      */
     public function store(StoreServerRequest $request): RedirectResponse
     {
-        Server::create($request->validated());
+        $validated = $request->validated();
+
+        if (!empty($validated['credentials'])) {
+            $validated['credentials'] = Crypt::encryptString($validated['credentials']);
+        }
+
+        Server::create($validated);
 
         return redirect()->route('servers.index')
             ->with('success', 'Server created successfully.');
@@ -65,7 +72,17 @@ class ServerController extends Controller
      */
     public function update(UpdateServerRequest $request, Server $server): RedirectResponse
     {
-        $server->update($request->validated());
+        $validated = $request->validated();
+
+        if (array_key_exists('credentials', $validated)) {
+            if (!empty($validated['credentials'])) {
+                $validated['credentials'] = Crypt::encryptString($validated['credentials']);
+            } else {
+                unset($validated['credentials']);
+            }
+        }
+
+        $server->update($validated);
 
         return redirect()->route('servers.index')
             ->with('success', 'Server updated successfully.');

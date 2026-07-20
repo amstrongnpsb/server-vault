@@ -14,7 +14,7 @@ This document outlines the implementation plan for the "Connect to Server" featu
 | Encrypted credential storage (`Crypt::encryptString` / `decrypted_credentials` accessor) | ✅ Ready                                                                |
 | `phpseclib/phpseclib ^3.0`                                                               | ✅ Installed, correct current major version                             |
 | `@xterm/xterm ^6.0.0` + `@xterm/addon-fit ^0.11.0`                                       | ✅ Installed, correct current scoped packages                           |
-| `Laravel Reverb ^1.10`                                                                   | ✅ Installed — kept for status/notification broadcasts, not for SSH I/O |
+| `Laravel Reverb ^1.10`                                                                   | ✅ Installed — reserved for future real-time features (server health, auto status) |
 | Server CRUD (backend + frontend)                                                         | ✅ Complete                                                             |
 | Credential reveal/copy UI in ServerDetailModal                                           | ✅ Complete                                                             |
 
@@ -45,7 +45,7 @@ SSH Bridge Process (ReactPHP, long-running, one event loop for all active sessio
 Remote Server (SSH)
 ```
 
-Reverb is **not** in this path. It's kept in the app for what it already does well (server online/offline broadcasts). The terminal gets its own lightweight, duplex-friendly transport.
+Reverb is **not** in this path. It's kept for future real-time features like automatic server health checks and live status updates.
 
 **Deployment note:** this requires a persistent, long-running process (the bridge) — it will not work on request/response-only hosting (e.g. some shared hosting or fully serverless PaaS). If your infra can't run Supervisor-managed processes, run the bridge on a small always-on VM instead of the whole app; it only proxies I/O, so it doesn't need much.
 
@@ -158,86 +158,17 @@ Route::post('/ssh/disconnect', [SshTerminalController::class, 'disconnect'])->na
 
 This runs as its own long-lived process (via Supervisor), separate from PHP-FPM, using an event loop to hold open connections.
 
-**Dependencies:**
+**Dependencies** (already in root `composer.json`):
 
-```bash
-composer require react/socket react/event-loop ratchet/pawl-or-ratchet
+```json
+"react/event-loop": "^1.6",
+"react/socket": "^1.17",
+"phpseclib/phpseclib": "^3.0"
 ```
 
-**File:** `bridge/server.php`
+The bridge runs from the root project (no separate `composer.json`), sharing vendor and autoload.
 
-```php
-<?php
-require __DIR__ . '/vendor/autoload.php';
-
-use Ratchet\MessageComponentInterface;
-use Ratchet\ConnectionInterface;
-use phpseclib3\Net\SSH2;
-
-class SshBridge implements MessageComponentInterface
-{
-    protected array $connections = []; // [resourceId => ['ssh' => SSH2, 'sessionId' => ...]]
-
-    public function onOpen(ConnectionInterface $conn)
-    {
-        // token comes in via query string on the WS handshake
-        parse_str(parse_url($conn->httpRequest->getUri(), PHP_URL_QUERY), $query);
-        $token = $query['token'] ?? null;
-
-        $sessionData = $this->validateTokenAgainstLaravel($token); // internal HTTP call
-        if (!$sessionData) {
-            $conn->close();
-            return;
-        }
-
-        $credentials = $this->fetchDecryptedCredentials($sessionData['server_id']); // internal call
-
-        $ssh = new SSH2($sessionData['host'], $sessionData['port'], 10);
-
-        $ok = $ssh->login($sessionData['username'], $credentials);
-
-        if (!$ok) {
-            $conn->send("\x1b[31mAuthentication failed.\x1b[0m\r\n");
-            $conn->close();
-            return;
-        }
-
-        $ssh->enablePTY();
-        $this->connections[$conn->resourceId] = ['ssh' => $ssh, 'sessionId' => $sessionData['id']];
-        $this->markSessionActive($sessionData['id']);
-    }
-
-    public function onMessage(ConnectionInterface $from, $msg)
-    {
-        // keystroke arrives here directly — no HTTP hop
-        $this->connections[$from->resourceId]['ssh']?->write($msg);
-    }
-
-    public function onClose(ConnectionInterface $conn)
-    {
-        $entry = $this->connections[$conn->resourceId] ?? null;
-        $entry?['ssh']->disconnect();
-        if ($entry) $this->markSessionClosed($entry['sessionId']);
-        unset($this->connections[$conn->resourceId]);
-    }
-
-    public function onError(ConnectionInterface $conn, \Exception $e)
-    {
-        $conn->close();
-    }
-
-    // Called on every event-loop tick to pump SSH output back out
-    public function pumpOutput()
-    {
-        foreach ($this->connections as $resourceId => $entry) {
-            $output = $entry['ssh']->read('', SSH2::READ_REGEX, 0.01);
-            if (!empty($output)) {
-                $this->findConnectionByResourceId($resourceId)?->send($output);
-            }
-        }
-    }
-}
-```
+**File:** `bridge/server.php` — custom ReactPHP TCP server with raw WebSocket handshake handling (no Ratchet). See actual source for current implementation.
 
 **Run it under Supervisor:**
 
@@ -448,8 +379,7 @@ onBeforeUnmount(() => {
 | `app/Http/Controllers/SshTerminalController.php`         | Token issuance, disconnect                       |
 | `app/Http/Controllers/InternalSshController.php`         | Internal-only endpoints for the bridge           |
 | `routes/internal.php`                                    | Internal route group, shared-secret middleware   |
-| `bridge/server.php`                                      | Standalone ReactPHP/Ratchet WebSocket↔SSH bridge |
-| `bridge/composer.json`                                   | Isolated dependencies for the bridge             |
+| `bridge/server.php`                                      | Standalone ReactPHP WebSocket↔SSH bridge (uses root vendor) |
 | `resources/js/Pages/Servers/Terminal.vue`                | Terminal page                                    |
 
 ### Modified
@@ -459,7 +389,7 @@ onBeforeUnmount(() => {
 | `routes/web.php`                        | `servers.terminal`, `servers.connect`, `ssh.disconnect` routes        |
 | `resources/js/Pages/Servers/Index.vue`  | "Connect" dropdown action                                             |
 | `database/seeders/PermissionSeeder.php` | `connect servers` permission                                          |
-| `config/services.php`                   | `ssh_bridge.ws_url`, `ssh_bridge.control_url`, internal shared secret |
+| `config/services.php`                   | `ssh_bridge.ws_url`, internal shared secret |
 
 ---
 

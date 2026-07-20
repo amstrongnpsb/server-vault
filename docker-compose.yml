@@ -36,6 +36,8 @@ services:
       - REVERB_HOST=${REVERB_HOST}
       - REVERB_PORT=${REVERB_PORT}
       - REVERB_SCHEME=${REVERB_SCHEME}
+      - SSH_BRIDGE_WS_URL=${SSH_BRIDGE_WS_URL:-ws://localhost:8090}
+      - SSH_BRIDGE_INTERNAL_SECRET=${SSH_BRIDGE_INTERNAL_SECRET}
     depends_on:
       db:
         condition: service_healthy
@@ -144,6 +146,29 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  ssh-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: servervault-ssh-bridge
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    command: php bridge/server.php
+    ports:
+      - "${SSH_BRIDGE_PORT:-8090}:8090"
+    networks:
+      - servervault
+    environment:
+      - APP_URL=http://nginx:80
+      - BRIDGE_HOST=0.0.0.0
+      - BRIDGE_PORT=8090
+      - INTERNAL_SECRET=${SSH_BRIDGE_INTERNAL_SECRET}
+    depends_on:
+      app:
+        condition: service_healthy
 
   queue:
     build:
