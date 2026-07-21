@@ -28,15 +28,6 @@ import {
     PaginationPrevious,
 } from "@/Components/ui/pagination";
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from "@/Components/ui/select";
-import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -313,10 +304,6 @@ const clearSearch = () => {
     search.value = "";
 };
 
-const clearStatusFilter = () => {
-    selectedStatus.value = [];
-};
-
 // Pagination computed properties
 const currentPage = computed(() => props.servers.current_page);
 const totalPages = computed(() => props.servers.last_page);
@@ -463,38 +450,15 @@ const getReactiveStatus = (server) => {
                         />
 
                         <!-- Status Filter -->
-                        <div class="flex items-center gap-2">
-                            <Select v-model="selectedStatus" multiple>
-                                <SelectTrigger class="w-48">
-                                    <SelectValue
-                                        placeholder="Filter by status"
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectLabel>Status</SelectLabel>
-                                        <SelectItem
-                                            v-for="status in statusOptions"
-                                            :key="status"
-                                            :value="status"
-                                        >
-                                            {{ status }}
-                                        </SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                            <button
-                                v-if="
-                                    selectedStatus && selectedStatus.length > 0
-                                "
-                                type="button"
-                                @click="clearStatusFilter"
-                                class="flex items-center justify-center w-8 h-8 text-muted-foreground transition-all duration-200 hover:text-foreground hover:scale-110 hover:bg-muted/50 rounded-md"
-                                title="Clear status filter"
-                            >
-                                <X class="h-4 w-4" />
-                            </button>
-                        </div>
+                        <MultiSelectFilter
+                            v-model="selectedStatus"
+                            :options="statusOptions"
+                            :icon="Monitor"
+                            placeholder="Filter by Status"
+                            label="Select Status"
+                            :allow-custom="false"
+                            :max-badges="2"
+                        />
                     </div>
                 </FadeIn>
 
