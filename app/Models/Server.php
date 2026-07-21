@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,10 @@ use Illuminate\Support\Facades\Crypt;
 class Server extends Model
 {
     use HasFactory, HasUuids;
+
+    const STATUS_ONLINE = 'Online';
+
+    const STATUS_OFFLINE = 'Offline';
 
     /**
      * The attributes that are not mass assignable.
@@ -68,15 +73,14 @@ class Server extends Model
      */
     public static function getStatusOptions(): array
     {
-        return ['Online', 'Offline'];
+        return [self::STATUS_ONLINE, self::STATUS_OFFLINE];
     }
 
     /**
      * Scope a query to search servers by name or host.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string|null  $search
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeSearch($query, ?string $search)
     {
@@ -94,9 +98,9 @@ class Server extends Model
     /**
      * Scope a query to filter servers by OS.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string|array|null  $os
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeFilterByOs($query, $os)
     {
@@ -114,9 +118,9 @@ class Server extends Model
     /**
      * Scope a query to filter servers by status.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string|array|null  $status
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeFilterByStatus($query, $status)
     {
@@ -136,7 +140,7 @@ class Server extends Model
      */
     public function isOnline(): bool
     {
-        return $this->status === 'Online';
+        return $this->status === self::STATUS_ONLINE;
     }
 
     /**
@@ -158,7 +162,7 @@ class Server extends Model
      */
     public function getHasCredentialsAttribute(): bool
     {
-        return !empty($this->credentials);
+        return ! empty($this->credentials);
     }
 
     /**

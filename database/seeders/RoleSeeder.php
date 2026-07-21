@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Role;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 class RoleSeeder extends Seeder
@@ -26,6 +26,11 @@ class RoleSeeder extends Seeder
             'view reports',
             'export data',
             'connect servers',
+            'view servers',
+            'create servers',
+            'edit servers',
+            'delete servers',
+            'check server health',
         ];
 
         foreach ($permissions as $permission) {

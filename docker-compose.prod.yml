@@ -137,11 +137,20 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_PORT=${REDIS_PORT}
       - QUEUE_CONNECTION=redis
+      - BROADCAST_CONNECTION=reverb
+      - REVERB_APP_ID=${REVERB_APP_ID}
+      - REVERB_APP_KEY=${REVERB_APP_KEY}
+      - REVERB_APP_SECRET=${REVERB_APP_SECRET}
+      - REVERB_HOST=reverb
+      - REVERB_PORT=8080
+      - REVERB_SCHEME=${REVERB_SCHEME:-http}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      reverb:
+        condition: service_started
     volumes:
       - logs:/var/www/html/storage/logs
     deploy:
@@ -159,6 +168,49 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: servervault-scheduler-prod
+    restart: always
+    command: ["php", "/var/www/html/artisan", "schedule:work"]
+    networks:
+      - servervault
+    environment:
+      - APP_NAME=${APP_NAME}
+      - APP_ENV=production
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=false
+      - DB_CONNECTION=${DB_CONNECTION}
+      - DB_HOST=db
+      - DB_PORT=${DB_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT}
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   ssh-bridge:
     build:

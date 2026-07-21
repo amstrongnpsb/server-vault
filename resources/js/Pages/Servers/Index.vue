@@ -72,9 +72,11 @@ import {
     X,
     Monitor,
     Eye,
+    RefreshCw,
 } from "lucide-vue-next";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { debounce } from "lodash-es";
+import { useServerStore } from "@/stores/useServerStore";
 
 const props = defineProps({
     servers: Object,
@@ -112,6 +114,32 @@ const selectedStatus = ref(
           ? initialStatus.split(",")
           : [],
 );
+
+const serverStore = useServerStore();
+const checkingServers = ref(new Set());
+
+const checkHealth = (server) => {
+    if (checkingServers.value.has(server.id)) return;
+    checkingServers.value.add(server.id);
+    router.post(route("servers.check", server.id), {}, {
+        preserveScroll: true,
+        onFinish: () => checkingServers.value.delete(server.id),
+    });
+};
+
+onMounted(() => {
+    if (props.servers?.data) {
+        serverStore.setServers(props.servers.data);
+    }
+    window.Echo.channel('servers')
+        .listen('.server.status.changed', (e) => {
+            serverStore.updateStatus(e.id, e.status, e.last_checked_at);
+        });
+});
+
+onUnmounted(() => {
+    window.Echo.leaveChannel('servers');
+});
 
 const isLoading = ref(false);
 const isDeleting = ref(false);
@@ -181,11 +209,12 @@ const openDetailModal = (server) => {
     detailModalOpen.value = true;
 };
 
-// Keep open modals in sync with fresh data from Inertia
+// Sync server store with fresh data from Inertia
 watch(
     () => props.servers,
     (newServers) => {
-        if (newServers && newServers.data) {
+        if (newServers?.data) {
+            serverStore.setServers(newServers.data);
             if (serverToView.value) {
                 const updatedServer = newServers.data.find(
                     (s) => s.id === serverToView.value.id,
@@ -308,6 +337,10 @@ const getStatusBadgeClass = (status) => {
     return status === "Online"
         ? "bg-green-100 text-green-800 border-green-200"
         : "bg-red-100 text-red-800 border-red-200";
+};
+
+const getReactiveStatus = (server) => {
+    return serverStore.servers[server.id]?.status || server.status;
 };
 </script>
 
@@ -569,30 +602,46 @@ const getStatusBadgeClass = (status) => {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge
-                                                variant="outline"
-                                                :class="[
-                                                    'rounded-full px-2 py-1 text-xs font-medium',
-                                                    getStatusBadgeClass(
-                                                        server.status,
-                                                    ),
-                                                ]"
-                                            >
-                                                <div
-                                                    class="flex items-center gap-1"
+                                            <div class="flex items-center gap-1">
+                                                <Badge
+                                                    variant="outline"
+                                                    :class="[
+                                                        'rounded-full px-2 py-1 text-xs font-medium',
+                                                        getStatusBadgeClass(
+                                                            getReactiveStatus(server),
+                                                        ),
+                                                    ]"
                                                 >
                                                     <div
-                                                        class="h-2 w-2 rounded-full"
-                                                        :class="
-                                                            server.status ===
-                                                            'Online'
-                                                                ? 'bg-green-500'
-                                                                : 'bg-red-500'
-                                                        "
+                                                        class="flex items-center gap-1"
+                                                    >
+                                                        <div
+                                                            class="h-2 w-2 rounded-full"
+                                                            :class="
+                                                                getReactiveStatus(server) ===
+                                                                'Online'
+                                                                    ? 'bg-green-500'
+                                                                    : 'bg-red-500'
+                                                            "
+                                                        />
+                                                        {{ getReactiveStatus(server) }}
+                                                    </div>
+                                                </Badge>
+                                                <button
+                                                    type="button"
+                                                    @click="checkHealth(server)"
+                                                    :disabled="checkingServers.has(server.id)"
+                                                    class="p-1 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted/50"
+                                                    title="Check health"
+                                                >
+                                                    <RefreshCw
+                                                        class="h-3.5 w-3.5"
+                                                        :class="{
+                                                            'animate-spin': checkingServers.has(server.id),
+                                                        }"
                                                     />
-                                                    {{ server.status }}
-                                                </div>
-                                            </Badge>
+                                                </button>
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             {{

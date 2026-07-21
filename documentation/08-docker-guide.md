@@ -18,6 +18,7 @@ npm run docker:dev:build
 # 3. Setup Laravel
 npm run artisan:key
 npm run artisan:migrate
+npm run artisan:seed
 
 # 4. Start Vite (separate terminal)
 npm install
@@ -40,7 +41,7 @@ npm run dev
 
 ## Why Hybrid Development?
 
-**Docker** runs: PHP, Nginx, MySQL, Redis, Queue, Reverb, SSH Bridge  
+**Docker** runs: PHP, Nginx, MySQL, Redis, Queue, Reverb, SSH Bridge, Scheduler  
 **Native** runs: Vite dev server
 
 **Reason:** Docker on Windows is slow for file watching. Running Vite natively = instant hot reload.
@@ -100,6 +101,24 @@ Required `.env` variable:
 SSH_BRIDGE_INTERNAL_SECRET=your-secret-key    # Must match config/services.php
 SSH_BRIDGE_WS_URL=ws://localhost:9002/terminal-ws  # Frontend WebSocket URL
 ```
+
+### Broadcast / Reverb Configuration
+
+The queue worker needs to know how to reach the Reverb server to broadcast events:
+
+```env
+# Dev (inside Docker network)
+REVERB_HOST=reverb          # Docker service name, not localhost
+REVERB_PORT=8080
+REVERB_SCHEME=http
+
+# Production
+REVERB_HOST=reverb          # Docker service name
+REVERB_PORT=8080
+REVERB_SCHEME=https         # Use https if behind TLS
+```
+
+The `queue` and `scheduler` containers use `REVERB_HOST=reverb` (service name) while the frontend uses `VITE_REVERB_HOST` for browser connections via nginx at `/ws`.
 
 ### Change Application Port
 
@@ -194,9 +213,12 @@ cp .env.production.example .env.production
 APP_URL=https://yourdomain.com
 DB_PASSWORD=strong_random_password_here
 REDIS_PASSWORD=strong_random_password_here
+REVERB_APP_ID=unique_id_here     # e.g., 123456
 REVERB_APP_KEY=unique_key_here
 REVERB_APP_SECRET=unique_secret_here
+REVERB_HOST=yourdomain.com
 REVERB_SCHEME=https
+SSH_BRIDGE_INTERNAL_SECRET=your_secret_here
 
 # 3. Build and deploy
 npm run docker:prod:build
@@ -204,6 +226,7 @@ npm run docker:prod:build
 # 4. Setup Laravel
 docker-compose -f docker-compose.prod.yml exec app php artisan key:generate
 npm run artisan:prod:migrate
+docker-compose -f docker-compose.prod.yml exec app php artisan db:seed --class=RoleSeeder
 npm run artisan:prod:optimize
 ```
 
@@ -213,6 +236,7 @@ npm run artisan:prod:optimize
 git pull
 npm run docker:prod:build
 npm run artisan:prod:migrate
+docker-compose -f docker-compose.prod.yml exec app php artisan db:seed --class=RoleSeeder
 npm run artisan:prod:optimize
 ```
 
@@ -220,7 +244,7 @@ npm run artisan:prod:optimize
 
 | | Development | Production |
 |---|---|---|
-| Containers | 7 separate | 6 combined |
+| Containers | 8 separate | 7 combined |
 | Vite | Native (hot reload) | Pre-built assets |
 | Opcache | Off | On |
 | Debug | On | Off |
@@ -238,6 +262,7 @@ npm run artisan:prod:optimize
 - **redis** - Redis 7 (port 6379)
 - **reverb** - WebSocket server (port 8080)
 - **queue** - Background jobs
+- **scheduler** - Runs `php artisan schedule:work` for cron tasks (health checks)
 - **ssh-bridge** - SSH terminal bridge (port 8090, proxied via nginx at `/terminal-ws`)
 
 ### Production Containers
@@ -245,6 +270,7 @@ npm run artisan:prod:optimize
 - **app** - Nginx + PHP-FPM combined (port 80)
 - **reverb** - WebSocket server (port 8080)
 - **queue** - Background jobs
+- **scheduler** - Runs `php artisan schedule:work` for cron tasks (health checks)
 - **db** - MySQL 8 (internal)
 - **redis** - Redis 7 (internal)
 - **ssh-bridge** - SSH terminal bridge (proxied via nginx at `/terminal-ws`)

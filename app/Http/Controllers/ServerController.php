@@ -4,8 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreServerRequest;
 use App\Http\Requests\UpdateServerRequest;
+use App\Jobs\CheckServerHealth as CheckServerHealthJob;
 use App\Models\Server;
+use App\Models\ServerDatabase;
+use App\Models\ServerService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,10 +28,10 @@ class ServerController extends Controller
         $statusFilter = request('status');
 
         // Convert comma-separated strings to arrays if needed
-        if (is_string($osFilter) && !empty($osFilter)) {
+        if (is_string($osFilter) && ! empty($osFilter)) {
             $osFilter = explode(',', $osFilter);
         }
-        if (is_string($statusFilter) && !empty($statusFilter)) {
+        if (is_string($statusFilter) && ! empty($statusFilter)) {
             $statusFilter = explode(',', $statusFilter);
         }
 
@@ -57,7 +63,7 @@ class ServerController extends Controller
     {
         $validated = $request->validated();
 
-        if (!empty($validated['credentials'])) {
+        if (! empty($validated['credentials'])) {
             $validated['credentials'] = Crypt::encryptString($validated['credentials']);
         }
 
@@ -75,7 +81,7 @@ class ServerController extends Controller
         $validated = $request->validated();
 
         if (array_key_exists('credentials', $validated)) {
-            if (!empty($validated['credentials'])) {
+            if (! empty($validated['credentials'])) {
                 $validated['credentials'] = Crypt::encryptString($validated['credentials']);
             } else {
                 unset($validated['credentials']);
@@ -102,15 +108,15 @@ class ServerController extends Controller
     /**
      * Get server details (databases and services) for the detail modal.
      */
-    public function details(Server $server): \Illuminate\Http\JsonResponse
+    public function details(Server $server): JsonResponse
     {
         $cacheKey = "server_details_{$server->id}";
 
         if (request()->boolean('force')) {
-            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+            Cache::forget($cacheKey);
         }
 
-        $details = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($server) {
+        $details = Cache::remember($cacheKey, 300, function () use ($server) {
             return [
                 'databases' => $server->databases()->get(),
                 'services' => $server->services()->get(),
@@ -123,23 +129,30 @@ class ServerController extends Controller
     /**
      * Reveal credentials securely via explicit API request
      */
-    public function revealCredential(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    public function checkHealth(Server $server): RedirectResponse
+    {
+        CheckServerHealthJob::dispatch($server);
+
+        return back()->with('success', "Health check queued for {$server->name}.");
+    }
+
+    public function revealCredential(Request $request): JsonResponse
     {
         $request->validate([
             'type' => 'required|in:server,database,service',
-            'id' => 'required|uuid'
+            'id' => 'required|uuid',
         ]);
 
         $modelClass = match ($request->type) {
-            'server' => \App\Models\Server::class,
-            'database' => \App\Models\ServerDatabase::class,
-            'service' => \App\Models\ServerService::class,
+            'server' => Server::class,
+            'database' => ServerDatabase::class,
+            'service' => ServerService::class,
         };
 
         $model = $modelClass::findOrFail($request->id);
 
         return response()->json([
-            'password' => $model->decrypted_credentials
+            'password' => $model->decrypted_credentials,
         ]);
     }
 }
