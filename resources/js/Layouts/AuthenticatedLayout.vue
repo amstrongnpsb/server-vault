@@ -21,11 +21,13 @@ import {
 import { Link } from "@inertiajs/vue3";
 import { LayoutDashboard, Server, Users } from "lucide-vue-next";
 import { useTheme } from "@/composables/useTheme";
+import { usePermission } from "@/composables/usePermission";
 import { onMounted, Teleport, watch } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { toast } from "vue-sonner";
 
 const page = usePage();
+const { hasPermission } = usePermission();
 
 const menuItems = [
     {
@@ -33,18 +35,21 @@ const menuItems = [
         routeName: "dashboard",
         icon: LayoutDashboard,
         activePattern: "dashboard",
+        permission: null,
     },
     {
         title: "User",
         routeName: "users.index",
         icon: Users,
         activePattern: "users.*",
+        permission: "manage users",
     },
     {
         title: "Server",
         routeName: "servers.index",
         icon: Server,
         activePattern: "servers.*",
+        permission: "view servers",
     },
 ];
 
@@ -99,10 +104,13 @@ onMounted(() => {
                     <SidebarGroupLabel>Navigation</SidebarGroupLabel>
 
                     <SidebarMenu>
-                        <SidebarMenuItem
+                        <template
                             v-for="item in menuItems"
                             :key="item.title"
                         >
+                            <SidebarMenuItem
+                                v-if="!item.permission || hasPermission(item.permission)"
+                            >
                             <SidebarMenuButton
                                 :href="route(item.routeName)"
                                 :is-active="route().current(item.activePattern)"
@@ -120,6 +128,7 @@ onMounted(() => {
                                 </span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                        </template>
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>

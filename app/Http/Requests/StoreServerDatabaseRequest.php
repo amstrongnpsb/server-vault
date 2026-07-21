@@ -8,7 +8,7 @@ class StoreServerDatabaseRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('edit servers') ?? false;
     }
 
     public function rules(): array

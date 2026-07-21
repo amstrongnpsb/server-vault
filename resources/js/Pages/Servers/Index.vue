@@ -78,6 +78,7 @@ import {
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { debounce } from "lodash-es";
 import { useServerStore } from "@/stores/useServerStore";
+import { usePermission } from "@/composables/usePermission";
 
 const props = defineProps({
     servers: Object,
@@ -117,6 +118,7 @@ const selectedStatus = ref(
 );
 
 const serverStore = useServerStore();
+const { hasPermission } = usePermission();
 const checkingServers = ref(new Set());
 const duplicatingServers = ref(new Set());
 
@@ -411,6 +413,7 @@ const getReactiveStatus = (server) => {
                                 </p>
                             </div>
                             <Button
+                                v-if="hasPermission('create servers')"
                                 @click="openCreateModal"
                                 class="transition-all duration-200 hover:scale-105"
                             >
@@ -647,6 +650,7 @@ const getReactiveStatus = (server) => {
                                                     </div>
                                                 </Badge>
                                                 <button
+                                                    v-if="hasPermission('check server health')"
                                                     type="button"
                                                     @click="checkHealth(server)"
                                                     :disabled="checkingServers.has(server.id)"
@@ -705,7 +709,10 @@ const getReactiveStatus = (server) => {
                                                         />
                                                         Details
                                                     </DropdownMenuItem>
-                                                <DropdownMenuItem as-child>
+                                                <DropdownMenuItem
+                                                    v-if="hasPermission('connect servers')"
+                                                    as-child
+                                                >
                                                     <Link
                                                         :href="
                                                             route(
@@ -722,6 +729,7 @@ const getReactiveStatus = (server) => {
                                                     </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
+                                                    v-if="hasPermission('create servers')"
                                                     @click="duplicateServer(server)"
                                                     :disabled="duplicatingServers.has(server.id)"
                                                     class="flex w-full cursor-pointer items-center"
@@ -733,6 +741,7 @@ const getReactiveStatus = (server) => {
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
+                                                    v-if="hasPermission('edit servers')"
                                                     @click="
                                                         openEditModal(
                                                             server,
@@ -746,6 +755,7 @@ const getReactiveStatus = (server) => {
                                                     Edit
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
+                                                    v-if="hasPermission('delete servers')"
                                                     class="text-destructive focus:text-destructive cursor-pointer"
                                                     @click="
                                                         openDeleteDialog(

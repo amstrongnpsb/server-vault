@@ -67,6 +67,8 @@ class ServerController extends Controller
             $validated['credentials'] = Crypt::encryptString($validated['credentials']);
         }
 
+        $validated['user_id'] = $request->user()->id;
+
         Server::create($validated);
 
         return redirect()->route('servers.index')
@@ -131,8 +133,6 @@ class ServerController extends Controller
      */
     public function duplicate(Server $server): RedirectResponse
     {
-        $this->authorize('create', Server::class);
-
         $baseName = $server->name . '-duplicate';
         $newName = $baseName;
         $counter = 2;
@@ -144,7 +144,7 @@ class ServerController extends Controller
         $credentials = $server->decrypted_credentials;
 
         $newServer = Server::create([
-            'user_id' => $server->user_id,
+            'user_id' => request()->user()->id,
             'name' => $newName,
             'host' => $server->host,
             'port' => $server->port,

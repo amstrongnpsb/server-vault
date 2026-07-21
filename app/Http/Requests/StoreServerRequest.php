@@ -14,7 +14,7 @@ class StoreServerRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('create servers') ?? false;
     }
 
     /**

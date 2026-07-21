@@ -57,12 +57,15 @@ import {
 import { ref, computed, watch } from "vue";
 import { debounce } from "lodash-es";
 import { toast } from "vue-sonner";
+import { usePermission } from "@/composables/usePermission";
 
 const props = defineProps({
     users: Object,
     roles: Array,
     filters: Object,
 });
+
+const { hasPermission } = usePermission();
 
 const deleteDialogOpen = ref(false);
 const userToDelete = ref(null);
@@ -290,6 +293,7 @@ const handlePageChange = (page) => {
                                 </p>
                             </div>
                             <Button
+                                v-if="hasPermission('manage users')"
                                 @click="openCreateModal"
                                 class="transition-all duration-200 hover:scale-105"
                             >
@@ -487,6 +491,7 @@ const handlePageChange = (page) => {
                                                 >
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
+                                                    v-if="hasPermission('manage users')"
                                                     class="cursor-pointer"
                                                     @click="openEditModal(user)"
                                                 >
@@ -496,6 +501,7 @@ const handlePageChange = (page) => {
                                                     Edit
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
+                                                    v-if="hasPermission('manage users')"
                                                     class="text-destructive focus:text-destructive cursor-pointer"
                                                     @click="
                                                         openDeleteDialog(user)

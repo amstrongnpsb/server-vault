@@ -15,8 +15,6 @@ class SshTerminalController extends Controller
 {
     public function show(Server $server): Response
     {
-        $this->authorize('connect', $server);
-
         return Inertia::render('Servers/Terminal', [
             'server' => $server->only('id', 'name', 'host', 'port', 'os'),
         ]);
@@ -24,8 +22,6 @@ class SshTerminalController extends Controller
 
     public function connect(Server $server): JsonResponse
     {
-        $this->authorize('connect', $server);
-
         $session = SshSession::create([
             'id' => (string) Str::uuid(),
             'server_id' => $server->id,

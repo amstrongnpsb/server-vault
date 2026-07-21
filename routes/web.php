@@ -23,29 +23,35 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('users', UserController::class)->only([
-        'index', 'store', 'update', 'destroy',
-    ]);
-    Route::resource('servers', ServerController::class)->only([
-        'index', 'store', 'update', 'destroy',
-    ]);
-    Route::get('/servers/{server}/details', [ServerController::class, 'details'])->name('servers.details');
-    Route::post('/credentials/reveal', [ServerController::class, 'revealCredential'])->name('credentials.reveal');
+    // Users
+    Route::get('/users', [UserController::class, 'index'])->name('users.index')->middleware('permission:manage users');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store')->middleware('permission:manage users');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:manage users');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:manage users');
 
-    Route::post('/servers/{server}/check', [ServerController::class, 'checkHealth'])->name('servers.check');
-    Route::post('/servers/{server}/duplicate', [ServerController::class, 'duplicate'])->name('servers.duplicate');
-    Route::get('/servers/{server}/terminal', [SshTerminalController::class, 'show'])->name('servers.terminal');
-    Route::post('/servers/{server}/connect', [SshTerminalController::class, 'connect'])->name('servers.connect');
-    Route::post('/ssh/disconnect', [SshTerminalController::class, 'disconnect'])->name('ssh.disconnect');
+    // Servers
+    Route::get('/servers', [ServerController::class, 'index'])->name('servers.index')->middleware('permission:view servers');
+    Route::post('/servers', [ServerController::class, 'store'])->name('servers.store')->middleware('permission:create servers');
+    Route::put('/servers/{server}', [ServerController::class, 'update'])->name('servers.update')->middleware('permission:edit servers');
+    Route::delete('/servers/{server}', [ServerController::class, 'destroy'])->name('servers.destroy')->middleware('permission:delete servers');
+    Route::get('/servers/{server}/details', [ServerController::class, 'details'])->name('servers.details')->middleware('permission:view servers');
+    Route::post('/credentials/reveal', [ServerController::class, 'revealCredential'])->name('credentials.reveal')->middleware('permission:edit servers');
 
-    // Nested routes for Databases and Services
-    Route::post('/servers/{server}/databases', [ServerDatabaseController::class, 'store'])->name('servers.databases.store');
-    Route::put('/databases/{serverDatabase}', [ServerDatabaseController::class, 'update'])->name('servers.databases.update');
-    Route::delete('/databases/{serverDatabase}', [ServerDatabaseController::class, 'destroy'])->name('servers.databases.destroy');
+    Route::post('/servers/{server}/check', [ServerController::class, 'checkHealth'])->name('servers.check')->middleware('permission:check server health');
+    Route::post('/servers/{server}/duplicate', [ServerController::class, 'duplicate'])->name('servers.duplicate')->middleware('permission:create servers');
+    Route::get('/servers/{server}/terminal', [SshTerminalController::class, 'show'])->name('servers.terminal')->middleware('permission:connect servers');
+    Route::post('/servers/{server}/connect', [SshTerminalController::class, 'connect'])->name('servers.connect')->middleware('permission:connect servers');
+    Route::post('/ssh/disconnect', [SshTerminalController::class, 'disconnect'])->name('ssh.disconnect')->middleware('permission:connect servers');
 
-    Route::post('/servers/{server}/services', [ServerServiceController::class, 'store'])->name('servers.services.store');
-    Route::put('/services/{serverService}', [ServerServiceController::class, 'update'])->name('servers.services.update');
-    Route::delete('/services/{serverService}', [ServerServiceController::class, 'destroy'])->name('servers.services.destroy');
+    // Databases
+    Route::post('/servers/{server}/databases', [ServerDatabaseController::class, 'store'])->name('servers.databases.store')->middleware('permission:edit servers');
+    Route::put('/databases/{serverDatabase}', [ServerDatabaseController::class, 'update'])->name('servers.databases.update')->middleware('permission:edit servers');
+    Route::delete('/databases/{serverDatabase}', [ServerDatabaseController::class, 'destroy'])->name('servers.databases.destroy')->middleware('permission:edit servers');
+
+    // Services
+    Route::post('/servers/{server}/services', [ServerServiceController::class, 'store'])->name('servers.services.store')->middleware('permission:edit servers');
+    Route::put('/services/{serverService}', [ServerServiceController::class, 'update'])->name('servers.services.update')->middleware('permission:edit servers');
+    Route::delete('/services/{serverService}', [ServerServiceController::class, 'destroy'])->name('servers.services.destroy')->middleware('permission:edit servers');
 });
 
 Route::middleware('auth')->group(function () {
