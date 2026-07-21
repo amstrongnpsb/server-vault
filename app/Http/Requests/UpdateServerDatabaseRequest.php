@@ -8,7 +8,7 @@ class UpdateServerDatabaseRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('edit servers') ?? false;
+        return $this->user()?->can('manage database servers') ?? false;
     }
 
     public function rules(): array

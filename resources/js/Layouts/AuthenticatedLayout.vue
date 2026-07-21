@@ -19,7 +19,7 @@ import {
     SidebarTrigger,
 } from "@/Components/ui/sidebar";
 import { Link } from "@inertiajs/vue3";
-import { LayoutDashboard, Server, Users } from "lucide-vue-next";
+import { LayoutDashboard, Server, Shield, Users } from "lucide-vue-next";
 import { useTheme } from "@/composables/useTheme";
 import { usePermission } from "@/composables/usePermission";
 import { onMounted, Teleport, watch } from "vue";
@@ -43,6 +43,13 @@ const menuItems = [
         icon: Users,
         activePattern: "users.*",
         permission: "manage users",
+    },
+    {
+        title: "Roles",
+        routeName: "roles.index",
+        icon: Shield,
+        activePattern: "roles.*",
+        permission: "manage roles",
     },
     {
         title: "Server",

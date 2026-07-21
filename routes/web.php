@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServerController;
 use App\Http\Controllers\ServerDatabaseController;
 use App\Http\Controllers\ServerServiceController;
@@ -23,6 +24,12 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Roles
+    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index')->middleware('permission:manage roles');
+    Route::post('/roles', [RoleController::class, 'store'])->name('roles.store')->middleware('permission:manage roles');
+    Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update')->middleware('permission:manage roles');
+    Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy')->middleware('permission:manage roles');
+
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('users.index')->middleware('permission:manage users');
     Route::post('/users', [UserController::class, 'store'])->name('users.store')->middleware('permission:manage users');
@@ -44,14 +51,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/ssh/disconnect', [SshTerminalController::class, 'disconnect'])->name('ssh.disconnect')->middleware('permission:connect servers');
 
     // Databases
-    Route::post('/servers/{server}/databases', [ServerDatabaseController::class, 'store'])->name('servers.databases.store')->middleware('permission:edit servers');
-    Route::put('/databases/{serverDatabase}', [ServerDatabaseController::class, 'update'])->name('servers.databases.update')->middleware('permission:edit servers');
-    Route::delete('/databases/{serverDatabase}', [ServerDatabaseController::class, 'destroy'])->name('servers.databases.destroy')->middleware('permission:edit servers');
+    Route::post('/servers/{server}/databases', [ServerDatabaseController::class, 'store'])->name('servers.databases.store')->middleware('permission:manage database servers');
+    Route::put('/databases/{serverDatabase}', [ServerDatabaseController::class, 'update'])->name('servers.databases.update')->middleware('permission:manage database servers');
+    Route::delete('/databases/{serverDatabase}', [ServerDatabaseController::class, 'destroy'])->name('servers.databases.destroy')->middleware('permission:manage database servers');
 
     // Services
-    Route::post('/servers/{server}/services', [ServerServiceController::class, 'store'])->name('servers.services.store')->middleware('permission:edit servers');
-    Route::put('/services/{serverService}', [ServerServiceController::class, 'update'])->name('servers.services.update')->middleware('permission:edit servers');
-    Route::delete('/services/{serverService}', [ServerServiceController::class, 'destroy'])->name('servers.services.destroy')->middleware('permission:edit servers');
+    Route::post('/servers/{server}/services', [ServerServiceController::class, 'store'])->name('servers.services.store')->middleware('permission:manage server services');
+    Route::put('/services/{serverService}', [ServerServiceController::class, 'update'])->name('servers.services.update')->middleware('permission:manage server services');
+    Route::delete('/services/{serverService}', [ServerServiceController::class, 'destroy'])->name('servers.services.destroy')->middleware('permission:manage server services');
 });
 
 Route::middleware('auth')->group(function () {

@@ -32,6 +32,8 @@ class RoleSeeder extends Seeder
             'delete servers',
             'check server health',
             'duplicate servers',
+            'manage database servers',
+            'manage server services',
         ];
 
         foreach ($permissions as $permission) {
@@ -44,16 +46,21 @@ class RoleSeeder extends Seeder
         // Create roles and assign permissions
         $superadminRole = Role::firstOrCreate(
             ['name' => 'superadmin', 'guard_name' => 'web'],
-            ['id' => Str::uuid()]
+            ['id' => Str::uuid(), 'display_name' => 'Superadmin', 'description' => 'Full access to all features']
         );
+        $superadminRole->update(['display_name' => 'Superadmin', 'description' => 'Full access to all features']);
+
         $adminRole = Role::firstOrCreate(
             ['name' => 'admin', 'guard_name' => 'web'],
-            ['id' => Str::uuid()]
+            ['id' => Str::uuid(), 'display_name' => 'Admin', 'description' => 'User and server management']
         );
+        $adminRole->update(['display_name' => 'Admin', 'description' => 'User and server management']);
+
         $userRole = Role::firstOrCreate(
             ['name' => 'user', 'guard_name' => 'web'],
-            ['id' => Str::uuid()]
+            ['id' => Str::uuid(), 'display_name' => 'User', 'description' => 'Basic view-only access']
         );
+        $userRole->update(['display_name' => 'User', 'description' => 'Basic view-only access']);
 
         // Assign all permissions to superadmin
         $superadminRole->syncPermissions(Permission::all());
@@ -62,6 +69,7 @@ class RoleSeeder extends Seeder
         $adminRole->syncPermissions([
             'view dashboard',
             'manage users',
+            'manage roles',
             'view reports',
             'view servers',
             'create servers',
@@ -70,6 +78,8 @@ class RoleSeeder extends Seeder
             'check server health',
             'duplicate servers',
             'connect servers',
+            'manage database servers',
+            'manage server services',
         ]);
 
         // Assign basic permissions to user
