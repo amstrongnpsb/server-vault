@@ -31,6 +31,7 @@ class RoleSeeder extends Seeder
             'edit servers',
             'delete servers',
             'check server health',
+            'duplicate servers',
         ];
 
         foreach ($permissions as $permission) {
@@ -62,6 +63,13 @@ class RoleSeeder extends Seeder
             'view dashboard',
             'manage users',
             'view reports',
+            'view servers',
+            'create servers',
+            'edit servers',
+            'delete servers',
+            'check server health',
+            'duplicate servers',
+            'connect servers',
         ]);
 
         // Assign basic permissions to user

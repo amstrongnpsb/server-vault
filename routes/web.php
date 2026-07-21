@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/credentials/reveal', [ServerController::class, 'revealCredential'])->name('credentials.reveal');
 
     Route::post('/servers/{server}/check', [ServerController::class, 'checkHealth'])->name('servers.check');
+    Route::post('/servers/{server}/duplicate', [ServerController::class, 'duplicate'])->name('servers.duplicate');
     Route::get('/servers/{server}/terminal', [SshTerminalController::class, 'show'])->name('servers.terminal');
     Route::post('/servers/{server}/connect', [SshTerminalController::class, 'connect'])->name('servers.connect');
     Route::post('/ssh/disconnect', [SshTerminalController::class, 'disconnect'])->name('ssh.disconnect');

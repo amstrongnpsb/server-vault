@@ -127,6 +127,38 @@ class ServerController extends Controller
     }
 
     /**
+     * Duplicate a server with all its attributes (no relations).
+     */
+    public function duplicate(Server $server): RedirectResponse
+    {
+        $this->authorize('create', Server::class);
+
+        $baseName = $server->name . '-duplicate';
+        $newName = $baseName;
+        $counter = 2;
+        while (Server::where('name', $newName)->exists()) {
+            $newName = $baseName . '-' . $counter;
+            $counter++;
+        }
+
+        $credentials = $server->decrypted_credentials;
+
+        $newServer = Server::create([
+            'user_id' => $server->user_id,
+            'name' => $newName,
+            'host' => $server->host,
+            'port' => $server->port,
+            'username' => $server->username,
+            'os' => $server->os,
+            'status' => Server::STATUS_OFFLINE,
+            'credentials' => $credentials ? Crypt::encryptString($credentials) : null,
+        ]);
+
+        return redirect()->route('servers.index')
+            ->with('success', "Server duplicated as \"{$newServer->name}\".");
+    }
+
+    /**
      * Reveal credentials securely via explicit API request
      */
     public function checkHealth(Server $server): RedirectResponse

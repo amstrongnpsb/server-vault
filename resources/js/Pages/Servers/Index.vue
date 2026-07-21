@@ -73,6 +73,7 @@ import {
     Monitor,
     Eye,
     RefreshCw,
+    Copy,
 } from "lucide-vue-next";
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { debounce } from "lodash-es";
@@ -117,6 +118,24 @@ const selectedStatus = ref(
 
 const serverStore = useServerStore();
 const checkingServers = ref(new Set());
+const duplicatingServers = ref(new Set());
+
+const duplicateServer = (server) => {
+    if (duplicatingServers.value.has(server.id)) return;
+    duplicatingServers.value.add(server.id);
+    router.post(route('servers.duplicate', server.id), {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Server duplicated successfully');
+            duplicatingServers.value.delete(server.id);
+        },
+        onError: (errors) => {
+            toast.error(errors.message || 'Failed to duplicate server');
+            duplicatingServers.value.delete(server.id);
+        },
+        onFinish: () => duplicatingServers.value.delete(server.id),
+    });
+};
 
 const checkHealth = (server) => {
     if (checkingServers.value.has(server.id)) return;
@@ -701,6 +720,16 @@ const getReactiveStatus = (server) => {
                                                         />
                                                         Connect
                                                     </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    @click="duplicateServer(server)"
+                                                    :disabled="duplicatingServers.has(server.id)"
+                                                    class="flex w-full cursor-pointer items-center"
+                                                >
+                                                    <Copy
+                                                        class="mr-2 h-4 w-4"
+                                                    />
+                                                    Duplicate
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
