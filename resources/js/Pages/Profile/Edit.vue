@@ -1,6 +1,5 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
 import { Head } from '@inertiajs/vue3';
@@ -45,11 +44,7 @@ defineProps({
                     <UpdatePasswordForm class="max-w-xl" />
                 </div>
 
-                <div
-                    class="border border-border bg-card p-4 shadow sm:rounded-lg sm:p-8"
-                >
-                    <DeleteUserForm class="max-w-xl" />
-                </div>
+
             </div>
         </div>
     </AuthenticatedLayout>

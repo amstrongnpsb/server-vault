@@ -97,10 +97,12 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
-        // Prevent deleting own account
-        if ($user->id === auth()->id()) {
-            return redirect()->route('users.index')
-                ->with('error', 'You cannot delete your own account.');
+        if ($user->hasRole('superadmin')) {
+            $superadminCount = User::role('superadmin')->count();
+            if ($superadminCount <= 1) {
+                return redirect()->route('users.index')
+                    ->with('error', 'Cannot delete the last superadmin user.');
+            }
         }
 
         $user->delete();

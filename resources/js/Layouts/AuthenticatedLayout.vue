@@ -22,11 +22,7 @@ import { Link } from "@inertiajs/vue3";
 import { LayoutDashboard, Server, Shield, Users } from "lucide-vue-next";
 import { useTheme } from "@/composables/useTheme";
 import { usePermission } from "@/composables/usePermission";
-import { onMounted, Teleport, watch } from "vue";
-import { usePage } from "@inertiajs/vue3";
-import { toast } from "vue-sonner";
-
-const page = usePage();
+import { onMounted, Teleport } from "vue";
 const { hasPermission } = usePermission();
 
 const menuItems = [

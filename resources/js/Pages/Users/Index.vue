@@ -65,6 +65,7 @@ const props = defineProps({
     filters: Object,
 });
 
+const page = usePage();
 const { hasPermission } = usePermission();
 
 const deleteDialogOpen = ref(false);
@@ -147,7 +148,6 @@ const deleteUser = () => {
     router.delete(route("users.destroy", userToDelete.value.id), {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success("User deleted successfully!");
             closeDeleteDialog();
         },
         onError: () => {
@@ -501,7 +501,7 @@ const handlePageChange = (page) => {
                                                     Edit
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    v-if="hasPermission('manage users')"
+                                                    v-if="hasPermission('manage users') && user.id !== page.props.auth.user.id"
                                                     class="text-destructive focus:text-destructive cursor-pointer"
                                                     @click="
                                                         openDeleteDialog(user)
