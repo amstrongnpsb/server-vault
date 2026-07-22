@@ -3,6 +3,7 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 use phpseclib3\Net\SSH2;
+use phpseclib3\Common\Functions\Strings;
 use React\EventLoop\Loop;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpServer;
@@ -56,10 +57,14 @@ function performHandshake(ConnectionInterface $conn, string $request): ?array
     $path = $matches[1];
     $query = parse_url($path, PHP_URL_QUERY);
     $token = null;
+    $cols = 80;
+    $rows = 24;
 
     if ($query) {
         parse_str($query, $params);
         $token = $params['token'] ?? null;
+        $cols = (int)($params['cols'] ?? 80);
+        $rows = (int)($params['rows'] ?? 24);
     }
 
     $lines = explode("\r\n", $request);
@@ -87,7 +92,7 @@ function performHandshake(ConnectionInterface $conn, string $request): ?array
 
     $conn->write($response);
 
-    return ['token' => $token];
+    return ['token' => $token, 'cols' => $cols, 'rows' => $rows];
 }
 
 function encodeFrame(string $data): string
@@ -145,6 +150,39 @@ function decodeFrame(string $data): ?string
     return substr($data, $offset, $payloadLen);
 }
 
+function sendWindowChange(SSH2 $ssh, int $cols, int $rows): void
+{
+    try {
+        $ref = new ReflectionClass($ssh);
+        $prop = $ref->getProperty('server_channels');
+        $prop->setAccessible(true);
+        $serverChannels = $prop->getValue($ssh);
+
+        $channelId = $ssh->getInteractiveChannelId();
+        $serverChannel = $serverChannels[$channelId] ?? null;
+
+        if ($serverChannel === null) return;
+
+        $packet = Strings::packSSH2(
+            'CNsbsN4',
+            98,
+            $serverChannel,
+            'window-change',
+            false,
+            $cols,
+            $rows,
+            0,
+            0
+        );
+
+        $method = $ref->getMethod('send_binary_packet');
+        $method->setAccessible(true);
+        $method->invoke($ssh, $packet);
+    } catch (\Exception $e) {
+        // reflection or send failure — ignore
+    }
+}
+
 $loop = Loop::get();
 
 $server = new TcpServer("$bridgeUrl:$bridgePort", $loop);
@@ -160,6 +198,8 @@ $server->on('connection', function (ConnectionInterface $conn) use (
     $ssh = null;
     $sessionId = null;
     $token = null;
+    $termCols = 80;
+    $termRows = 24;
 
     $conn->on('data', function ($data) use (
         $conn,
@@ -168,6 +208,8 @@ $server->on('connection', function (ConnectionInterface $conn) use (
         &$ssh,
         &$sessionId,
         &$token,
+        &$termCols,
+        &$termRows,
         $loop
     ) {
         if (!$handshakeDone) {
@@ -188,6 +230,8 @@ $server->on('connection', function (ConnectionInterface $conn) use (
                 }
 
                 $token = $result['token'];
+                $termCols = $result['cols'] ?? 80;
+                $termRows = $result['rows'] ?? 24;
                 $handshakeDone = true;
                 $buffer = '';
 
@@ -228,7 +272,8 @@ $server->on('connection', function (ConnectionInterface $conn) use (
                             return;
                         }
 
-                        $ssh->enablePTY();
+                        $ssh->setTerminal('xterm-256color');
+                        $ssh->setWindowSize($termCols, $termRows);
                         $ssh->setTimeout(5);
 
                         try {
@@ -284,10 +329,22 @@ $server->on('connection', function (ConnectionInterface $conn) use (
         }
 
         if ($ssh && $decoded !== '') {
-            try {
-                $ssh->write($decoded);
-            } catch (\Exception $e) {
-                // connection closed
+            $resize = json_decode($decoded, true);
+            if (is_array($resize) && ($resize['type'] ?? '') === 'resize') {
+                $cols = (int)($resize['cols'] ?? 80);
+                $rows = (int)($resize['rows'] ?? 24);
+                try {
+                    $ssh->setWindowSize($cols, $rows);
+                    sendWindowChange($ssh, $cols, $rows);
+                } catch (\Exception $e) {
+                    // ignore
+                }
+            } else {
+                try {
+                    $ssh->write($decoded);
+                } catch (\Exception $e) {
+                    // connection closed
+                }
             }
         }
     });

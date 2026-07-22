@@ -20,32 +20,53 @@ let terminal = null;
 let fitAddon = null;
 let socket = null;
 
-const fitTerminal = () => {
-    nextTick(() => fitAddon?.fit());
-};
+    const fitTerminal = () => {
+        nextTick(() => fitAddon?.fit());
+    };
 
-const { isDark } = useTheme();
+    const { isDark } = useTheme();
 
-const initTerminal = () => {
-    terminal = new Terminal({
-        cursorBlink: true,
-        fontSize: 14,
-        fontFamily: "JetBrains Mono, Fira Code, monospace",
-        theme: isDark.value
-            ? { background: "#020a14", foreground: "#abb0af", cursor: "#36d9b8" }
-            : { background: "#fefefe", foreground: "#2a2a2a", cursor: "#36d9b8" },
-    });
-    fitAddon = new FitAddon();
-    terminal.loadAddon(fitAddon);
-    terminal.open(terminalRef.value);
-    fitTerminal();
+    const initTerminal = () => {
+        terminal = new Terminal({
+            cursorBlink: true,
+            fontSize: 14,
+            fontFamily: "JetBrains Mono, Fira Code, monospace",
+            theme: isDark.value
+                ? { background: "#020a14", foreground: "#abb0af", cursor: "#36d9b8" }
+                : { background: "#fefefe", foreground: "#2a2a2a", cursor: "#36d9b8" },
+        });
+        fitAddon = new FitAddon();
+        terminal.loadAddon(fitAddon);
+        terminal.open(terminalRef.value);
+        fitTerminal();
 
-    terminal.onData((data) => {
-        if (socket?.readyState === WebSocket.OPEN) {
-            socket.send(data);
-        }
-    });
-};
+        terminal.onData((data) => {
+            if (socket?.readyState === WebSocket.OPEN) {
+                socket.send(data);
+            }
+        });
+
+        terminal.attachCustomKeyEventHandler((e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+                if (terminal.hasSelection()) {
+                    document.execCommand("copy");
+                    return false;
+                }
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+                return false;
+            }
+            return true;
+        });
+
+        terminalRef.value.addEventListener("paste", (e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData("text/plain");
+            if (socket?.readyState === WebSocket.OPEN) {
+                socket.send(text);
+            }
+        });
+    };
 
 const disconnect = () => {
     if (isClosing.value) return;
@@ -64,7 +85,7 @@ const connect = async () => {
         );
         sessionId = data.session_id;
 
-        const wsUrl = `${data.bridge_url}?token=${data.token}`;
+        const wsUrl = `${data.bridge_url}?token=${data.token}&cols=${terminal.cols}&rows=${terminal.rows}`;
         terminal.writeln(`\x1b[2mConnecting to ${wsUrl}...\x1b[0m`);
 
         socket = new WebSocket(wsUrl);
@@ -73,6 +94,12 @@ const connect = async () => {
             connectionState.value = 'connected';
             terminal.focus();
         };
+
+        terminal.onResize(({ cols, rows }) => {
+            if (socket?.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: "resize", cols, rows }));
+            }
+        });
         socket.onmessage = (event) => {
             if (event.data instanceof ArrayBuffer) {
                 const decoder = new TextDecoder("utf-8");
