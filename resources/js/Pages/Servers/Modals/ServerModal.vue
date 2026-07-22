@@ -159,6 +159,22 @@ watch(
     }
 );
 
+const osPortMap = {
+    Ubuntu: 22,
+    Debian: 22,
+    CentOS: 22,
+    Windows: 3389,
+};
+
+watch(
+    () => form.os,
+    (os) => {
+        if (!props.isEdit && os in osPortMap) {
+            form.port = osPortMap[os];
+        }
+    }
+);
+
 const closeModal = () => {
     emit("update:open", false);
 };

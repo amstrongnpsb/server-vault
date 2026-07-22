@@ -69,7 +69,9 @@ class ServerController extends Controller
 
         $validated['user_id'] = $request->user()->id;
 
-        Server::create($validated);
+        $server = Server::create($validated);
+
+        CheckServerHealthJob::dispatch($server);
 
         return redirect()->route('servers.index')
             ->with('success', 'Server created successfully.');

@@ -44,16 +44,8 @@ class CheckServerHealth implements ShouldQueue
         $host = $this->server->host;
         $port = $this->server->port ?? 22;
 
-        try {
-            $connection = @fsockopen($host, $port, $errno, $errstr, 5);
-
-            if (is_resource($connection)) {
-                fclose($connection);
-
-                return Server::STATUS_ONLINE;
-            }
-        } catch (\Throwable $e) {
-            //
+        if ($this->tcpConnect($host, $port)) {
+            return Server::STATUS_ONLINE;
         }
 
         try {
@@ -66,6 +58,45 @@ class CheckServerHealth implements ShouldQueue
             //
         }
 
+        $fallbackPorts = $this->getFallbackPorts();
+        foreach ($fallbackPorts as $fallbackPort) {
+            if ($fallbackPort === $port) {
+                continue;
+            }
+
+            if ($this->tcpConnect($host, $fallbackPort)) {
+                return Server::STATUS_ONLINE;
+            }
+        }
+
         return Server::STATUS_OFFLINE;
+    }
+
+    private function tcpConnect(string $host, int $port, int $timeout = 5): bool
+    {
+        try {
+            $connection = @fsockopen($host, $port, $errno, $errstr, $timeout);
+
+            if (is_resource($connection)) {
+                fclose($connection);
+
+                return true;
+            }
+        } catch (\Throwable $e) {
+            //
+        }
+
+        return false;
+    }
+
+    private function getFallbackPorts(): array
+    {
+        $ports = [];
+
+        if (strtolower($this->server->os) === 'windows') {
+            $ports = [3389, 5985, 5986];
+        }
+
+        return $ports;
     }
 }
