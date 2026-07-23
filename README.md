@@ -141,7 +141,6 @@ documentation/
 ## Documentation
 
 - **Docker Guide**: `documentation/08-docker-guide.md` — full setup, config, and troubleshooting
-- **Guacamole Protocol**: `documentation/bugfix/fixing-rdp.md` — wire protocol reference for the custom RDP bridge
 
 ## License
 
