@@ -69,16 +69,20 @@ const serviceModalOpen = ref(false);
 const serviceToEdit = ref(null);
 const isServiceEdit = ref(false);
 
-const { databases, services, isLoading, fetchDetails, invalidateCache } = useServerDetails();
+const { databases, services, isLoading, fetchDetails, invalidateCache } =
+    useServerDetails();
 
 const dbCount = computed(() => databases.value?.length || 0);
 const svcCount = computed(() => services.value?.length || 0);
 
-watch(() => props.open, (isOpen) => {
-    if (isOpen && props.server?.id) {
-        fetchDetails(props.server.id);
-    }
-});
+watch(
+    () => props.open,
+    (isOpen) => {
+        if (isOpen && props.server?.id) {
+            fetchDetails(props.server.id);
+        }
+    },
+);
 
 // Password reveal state per row
 // Password reveal state per row
@@ -94,10 +98,13 @@ const togglePassword = async (type, id) => {
 
     try {
         isLoadingPassword.value[id] = true;
-        const response = await axios.post(route('credentials.reveal'), { type, id });
+        const response = await axios.post(route("credentials.reveal"), {
+            type,
+            id,
+        });
         revealedPasswords.value[id] = response.data.password;
     } catch (e) {
-        toast.error('Failed to reveal password');
+        toast.error("Failed to reveal password");
     } finally {
         isLoadingPassword.value[id] = false;
     }
@@ -108,10 +115,13 @@ const copyPassword = async (type, id) => {
     if (password === undefined) {
         try {
             isLoadingPassword.value[id] = true;
-            const response = await axios.post(route('credentials.reveal'), { type, id });
+            const response = await axios.post(route("credentials.reveal"), {
+                type,
+                id,
+            });
             password = response.data.password;
         } catch (e) {
-            toast.error('Failed to copy password');
+            toast.error("Failed to copy password");
             return;
         } finally {
             isLoadingPassword.value[id] = false;
@@ -123,7 +133,7 @@ const copyPassword = async (type, id) => {
         copiedPasswords.add(id);
         setTimeout(() => copiedPasswords.delete(id), 2000);
     } catch {
-        toast.error('Failed to copy to clipboard');
+        toast.error("Failed to copy to clipboard");
     }
 };
 
@@ -159,11 +169,11 @@ const closeDeleteDialog = () => {
 
 const executeDelete = () => {
     if (!itemToDelete.value) return;
-    
+
     isDeleting.value = true;
     const id = itemToDelete.value.id;
-    
-    if (deleteType.value === 'database') {
+
+    if (deleteType.value === "database") {
         router.delete(route("servers.databases.destroy", id), {
             preserveState: true,
             preserveScroll: true,
@@ -178,7 +188,7 @@ const executeDelete = () => {
                 isDeleting.value = false;
             },
         });
-    } else if (deleteType.value === 'service') {
+    } else if (deleteType.value === "service") {
         router.delete(route("servers.services.destroy", id), {
             preserveState: true,
             preserveScroll: true,
@@ -208,18 +218,24 @@ const openEditService = (service) => {
     serviceModalOpen.value = true;
 };
 
+const formatDate = (dateString) => {
+    if (!dateString) return "—";
+    const d = new Date(dateString);
+    return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+};
+
+const descriptionExpanded = ref(false);
+const DESCRIPTION_CHAR_LIMIT = 120;
+const isDescriptionLong = computed(() => {
+    return (props.server?.description?.length || 0) > DESCRIPTION_CHAR_LIMIT;
+});
+
 const handleHeaderAction = () => {
     if (activeTab.value === "databases") {
         openAddDatabase();
     } else {
         openAddService();
     }
-};
-
-const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    const d = new Date(dateString);
-    return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
 };
 
 const handleSaved = () => {
@@ -249,21 +265,19 @@ const getServiceIcon = (name) => {
             <div v-if="server" class="flex flex-col h-full max-h-[85vh]">
                 <!-- Custom Header matching mockup -->
                 <div
-                    class="px-6 py-5 flex items-center justify-between border-b border-border"
+                    class="px-8 py-5 flex items-start justify-between border-b border-border"
                 >
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-start gap-4">
                         <div
-                            class="flex items-center justify-center h-12 w-12 rounded-lg bg-background"
+                            class="flex items-center justify-center h-12 w-12 rounded-lg bg-background shrink-0 mt-0.5"
                         >
                             <Server class="h-6 w-6" />
                         </div>
-                        <div class="flex flex-col">
-                            <h2 class="text-xl font-semibold tracking-tight">
+                        <div class="flex flex-col min-w-0">
+                            <h2 class="text-xl font-semibold tracking-tight truncate">
                                 {{ server.name }}
                             </h2>
-                            <div
-                                class="text-sm text-muted-foreground font-medium mt-0.5 flex items-center gap-2 flex-wrap"
-                            >
+                            <div class="text-sm text-muted-foreground font-medium mt-0.5 flex items-center gap-2 flex-wrap">
                                 <span>{{ server.host || server.ip_address }} &middot; {{ server.os }}</span>
                                 <span v-if="server.username">&middot; {{ server.username }}</span>
                                 <div v-if="server.has_credentials" class="flex items-center gap-1.5">
@@ -271,27 +285,38 @@ const getServiceIcon = (name) => {
                                         <span v-if="isLoadingPassword[server.id]">...</span>
                                         <span v-else>{{ revealedPasswords[server.id] !== undefined ? revealedPasswords[server.id] : '••••••••' }}</span>
                                     </code>
-                                    <button
-                                        type="button"
-                                        @click="togglePassword('server', server.id)"
+                                    <button type="button" @click="togglePassword('server', server.id)"
                                         class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
                                         :disabled="isLoadingPassword[server.id]"
-                                        :title="revealedPasswords[server.id] !== undefined ? 'Hide' : 'Reveal'"
-                                    >
+                                        :title="revealedPasswords[server.id] !== undefined ? 'Hide' : 'Reveal'">
                                         <EyeOff v-if="revealedPasswords[server.id] !== undefined" class="h-3.5 w-3.5" />
                                         <Eye v-else class="h-3.5 w-3.5" />
                                     </button>
-                                    <button
-                                        type="button"
-                                        @click="copyPassword('server', server.id)"
+                                    <button type="button" @click="copyPassword('server', server.id)"
                                         class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
-                                        :disabled="isLoadingPassword[server.id]"
-                                        title="Copy password"
-                                    >
+                                        :disabled="isLoadingPassword[server.id]" title="Copy password">
                                         <Check v-if="copiedPasswords.has(server.id)" class="h-3.5 w-3.5 text-green-500" />
                                         <Copy v-else class="h-3.5 w-3.5" />
                                     </button>
                                 </div>
+                            </div>
+                            <div
+                                v-if="server.description"
+                                class="mt-1.5 max-w-xl border border-border rounded-md px-3 py-2 bg-background/50"
+                            >
+                                <p
+                                    class="text-sm text-muted-foreground leading-relaxed whitespace-pre-line"
+                                    :class="!descriptionExpanded && isDescriptionLong ? 'line-clamp-2' : ''"
+                                >
+                                    {{ server.description }}
+                                </p>
+                                <button
+                                    v-if="isDescriptionLong"
+                                    @click="descriptionExpanded = !descriptionExpanded"
+                                    class="text-xs text-muted-foreground/60 hover:text-foreground transition-colors mt-0.5 focus:outline-none"
+                                >
+                                    {{ descriptionExpanded ? 'Show less' : 'Show more' }}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -304,7 +329,10 @@ const getServiceIcon = (name) => {
                             :disabled="isLoading"
                             title="Refresh data"
                         >
-                            <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': isLoading }" />
+                            <RefreshCw
+                                class="h-4 w-4"
+                                :class="{ 'animate-spin': isLoading }"
+                            />
                         </Button>
                         <Button
                             @click="handleHeaderAction"
@@ -327,7 +355,7 @@ const getServiceIcon = (name) => {
                         class="w-full flex flex-col h-full"
                     >
                         <!-- Tabs matching the minimal line style in mockup -->
-                        <div class="px-6 border-b border-border">
+                        <div class="px-8 border-b border-border">
                             <TabsList class="h-auto p-0 bg-transparent gap-2">
                                 <TabsTrigger
                                     value="databases"
@@ -386,14 +414,45 @@ const getServiceIcon = (name) => {
                                     </TableHeader>
                                     <TableBody>
                                         <template v-if="isLoading">
-                                            <TableRow v-for="i in 3" :key="`db-skeleton-${i}`" class="border-border">
-                                                <TableCell class="pl-6"><div class="flex items-center gap-3"><Skeleton class="h-4 w-4" /><Skeleton class="h-4 w-[120px]" /></div></TableCell>
-                                                <TableCell><Skeleton class="h-4 w-[80px]" /></TableCell>
-                                                <TableCell><Skeleton class="h-4 w-[40px]" /></TableCell>
-                                                <TableCell><Skeleton class="h-4 w-[80px]" /></TableCell>
-                                                <TableCell><Skeleton class="h-4 w-[100px]" /></TableCell>
-                                                <TableCell><Skeleton class="h-4 w-[60px]" /></TableCell>
-                                                <TableCell class="pr-6"><Skeleton class="h-8 w-8 rounded-md ml-auto" /></TableCell>
+                                            <TableRow
+                                                v-for="i in 3"
+                                                :key="`db-skeleton-${i}`"
+                                                class="border-border"
+                                            >
+                                                <TableCell class="pl-6"
+                                                    ><div
+                                                        class="flex items-center gap-3"
+                                                    >
+                                                        <Skeleton
+                                                            class="h-4 w-4"
+                                                        /><Skeleton
+                                                            class="h-4 w-[120px]"
+                                                        /></div
+                                                ></TableCell>
+                                                <TableCell
+                                                    ><Skeleton
+                                                        class="h-4 w-[80px]"
+                                                /></TableCell>
+                                                <TableCell
+                                                    ><Skeleton
+                                                        class="h-4 w-[40px]"
+                                                /></TableCell>
+                                                <TableCell
+                                                    ><Skeleton
+                                                        class="h-4 w-[80px]"
+                                                /></TableCell>
+                                                <TableCell
+                                                    ><Skeleton
+                                                        class="h-4 w-[100px]"
+                                                /></TableCell>
+                                                <TableCell
+                                                    ><Skeleton
+                                                        class="h-4 w-[60px]"
+                                                /></TableCell>
+                                                <TableCell class="pr-6"
+                                                    ><Skeleton
+                                                        class="h-8 w-8 rounded-md ml-auto"
+                                                /></TableCell>
                                             </TableRow>
                                         </template>
                                         <TableRow
@@ -440,33 +499,101 @@ const getServiceIcon = (name) => {
                                                 db.username || "—"
                                             }}</TableCell>
                                             <TableCell>
-                                                <div v-if="db.has_credentials" class="flex items-center gap-1.5">
-                                                    <code class="text-xs bg-muted/50 px-1.5 py-0.5 rounded font-mono min-w-[4rem]">
-                                                        <span v-if="isLoadingPassword[db.id]">...</span>
-                                                        <span v-else>{{ revealedPasswords[db.id] !== undefined ? revealedPasswords[db.id] : '••••••••' }}</span>
+                                                <div
+                                                    v-if="db.has_credentials"
+                                                    class="flex items-center gap-1.5"
+                                                >
+                                                    <code
+                                                        class="text-xs bg-muted/50 px-1.5 py-0.5 rounded font-mono min-w-[4rem]"
+                                                    >
+                                                        <span
+                                                            v-if="
+                                                                isLoadingPassword[
+                                                                    db.id
+                                                                ]
+                                                            "
+                                                            >...</span
+                                                        >
+                                                        <span v-else>{{
+                                                            revealedPasswords[
+                                                                db.id
+                                                            ] !== undefined
+                                                                ? revealedPasswords[
+                                                                      db.id
+                                                                  ]
+                                                                : "••••••••"
+                                                        }}</span>
                                                     </code>
                                                     <button
                                                         type="button"
-                                                        @click="togglePassword('database', db.id)"
+                                                        @click="
+                                                            togglePassword(
+                                                                'database',
+                                                                db.id,
+                                                            )
+                                                        "
                                                         class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
-                                                        :disabled="isLoadingPassword[db.id]"
-                                                        :title="revealedPasswords[db.id] !== undefined ? 'Hide' : 'Reveal'"
+                                                        :disabled="
+                                                            isLoadingPassword[
+                                                                db.id
+                                                            ]
+                                                        "
+                                                        :title="
+                                                            revealedPasswords[
+                                                                db.id
+                                                            ] !== undefined
+                                                                ? 'Hide'
+                                                                : 'Reveal'
+                                                        "
                                                     >
-                                                        <EyeOff v-if="revealedPasswords[db.id] !== undefined" class="h-3.5 w-3.5" />
-                                                        <Eye v-else class="h-3.5 w-3.5" />
+                                                        <EyeOff
+                                                            v-if="
+                                                                revealedPasswords[
+                                                                    db.id
+                                                                ] !== undefined
+                                                            "
+                                                            class="h-3.5 w-3.5"
+                                                        />
+                                                        <Eye
+                                                            v-else
+                                                            class="h-3.5 w-3.5"
+                                                        />
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        @click="copyPassword('database', db.id)"
+                                                        @click="
+                                                            copyPassword(
+                                                                'database',
+                                                                db.id,
+                                                            )
+                                                        "
                                                         class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
-                                                        :disabled="isLoadingPassword[db.id]"
+                                                        :disabled="
+                                                            isLoadingPassword[
+                                                                db.id
+                                                            ]
+                                                        "
                                                         title="Copy password"
                                                     >
-                                                        <Check v-if="copiedPasswords.has(db.id)" class="h-3.5 w-3.5 text-green-500" />
-                                                        <Copy v-else class="h-3.5 w-3.5" />
+                                                        <Check
+                                                            v-if="
+                                                                copiedPasswords.has(
+                                                                    db.id,
+                                                                )
+                                                            "
+                                                            class="h-3.5 w-3.5 text-green-500"
+                                                        />
+                                                        <Copy
+                                                            v-else
+                                                            class="h-3.5 w-3.5"
+                                                        />
                                                     </button>
                                                 </div>
-                                                <span v-else class="text-muted-foreground px-1.5">—</span>
+                                                <span
+                                                    v-else
+                                                    class="text-muted-foreground px-1.5"
+                                                    >—</span
+                                                >
                                             </TableCell>
                                             <TableCell
                                                 class="text-muted-foreground"
@@ -564,14 +691,45 @@ const getServiceIcon = (name) => {
                                     </TableHeader>
                                     <TableBody>
                                         <template v-if="isLoading">
-                                            <TableRow v-for="i in 3" :key="`svc-skeleton-${i}`" class="border-border">
-                                                <TableCell class="pl-6"><div class="flex items-center gap-3"><Skeleton class="h-4 w-4" /><Skeleton class="h-4 w-[120px]" /></div></TableCell>
-                                                <TableCell><Skeleton class="h-4 w-[40px]" /></TableCell>
-                                                <TableCell><Skeleton class="h-4 w-[80px]" /></TableCell>
-                                                <TableCell><Skeleton class="h-4 w-[100px]" /></TableCell>
-                                                <TableCell><Skeleton class="h-4 w-[150px]" /></TableCell>
-                                                <TableCell><Skeleton class="h-4 w-[60px]" /></TableCell>
-                                                <TableCell class="pr-6"><Skeleton class="h-8 w-8 rounded-md ml-auto" /></TableCell>
+                                            <TableRow
+                                                v-for="i in 3"
+                                                :key="`svc-skeleton-${i}`"
+                                                class="border-border"
+                                            >
+                                                <TableCell class="pl-6"
+                                                    ><div
+                                                        class="flex items-center gap-3"
+                                                    >
+                                                        <Skeleton
+                                                            class="h-4 w-4"
+                                                        /><Skeleton
+                                                            class="h-4 w-[120px]"
+                                                        /></div
+                                                ></TableCell>
+                                                <TableCell
+                                                    ><Skeleton
+                                                        class="h-4 w-[40px]"
+                                                /></TableCell>
+                                                <TableCell
+                                                    ><Skeleton
+                                                        class="h-4 w-[80px]"
+                                                /></TableCell>
+                                                <TableCell
+                                                    ><Skeleton
+                                                        class="h-4 w-[100px]"
+                                                /></TableCell>
+                                                <TableCell
+                                                    ><Skeleton
+                                                        class="h-4 w-[150px]"
+                                                /></TableCell>
+                                                <TableCell
+                                                    ><Skeleton
+                                                        class="h-4 w-[60px]"
+                                                /></TableCell>
+                                                <TableCell class="pr-6"
+                                                    ><Skeleton
+                                                        class="h-8 w-8 rounded-md ml-auto"
+                                                /></TableCell>
                                             </TableRow>
                                         </template>
                                         <TableRow
@@ -613,33 +771,101 @@ const getServiceIcon = (name) => {
                                                 svc.username || "—"
                                             }}</TableCell>
                                             <TableCell>
-                                                <div v-if="svc.has_credentials" class="flex items-center gap-1.5">
-                                                    <code class="text-xs bg-muted/50 px-1.5 py-0.5 rounded font-mono min-w-[4rem]">
-                                                        <span v-if="isLoadingPassword[svc.id]">...</span>
-                                                        <span v-else>{{ revealedPasswords[svc.id] !== undefined ? revealedPasswords[svc.id] : '••••••••' }}</span>
+                                                <div
+                                                    v-if="svc.has_credentials"
+                                                    class="flex items-center gap-1.5"
+                                                >
+                                                    <code
+                                                        class="text-xs bg-muted/50 px-1.5 py-0.5 rounded font-mono min-w-[4rem]"
+                                                    >
+                                                        <span
+                                                            v-if="
+                                                                isLoadingPassword[
+                                                                    svc.id
+                                                                ]
+                                                            "
+                                                            >...</span
+                                                        >
+                                                        <span v-else>{{
+                                                            revealedPasswords[
+                                                                svc.id
+                                                            ] !== undefined
+                                                                ? revealedPasswords[
+                                                                      svc.id
+                                                                  ]
+                                                                : "••••••••"
+                                                        }}</span>
                                                     </code>
                                                     <button
                                                         type="button"
-                                                        @click="togglePassword('service', svc.id)"
+                                                        @click="
+                                                            togglePassword(
+                                                                'service',
+                                                                svc.id,
+                                                            )
+                                                        "
                                                         class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
-                                                        :disabled="isLoadingPassword[svc.id]"
-                                                        :title="revealedPasswords[svc.id] !== undefined ? 'Hide' : 'Reveal'"
+                                                        :disabled="
+                                                            isLoadingPassword[
+                                                                svc.id
+                                                            ]
+                                                        "
+                                                        :title="
+                                                            revealedPasswords[
+                                                                svc.id
+                                                            ] !== undefined
+                                                                ? 'Hide'
+                                                                : 'Reveal'
+                                                        "
                                                     >
-                                                        <EyeOff v-if="revealedPasswords[svc.id] !== undefined" class="h-3.5 w-3.5" />
-                                                        <Eye v-else class="h-3.5 w-3.5" />
+                                                        <EyeOff
+                                                            v-if="
+                                                                revealedPasswords[
+                                                                    svc.id
+                                                                ] !== undefined
+                                                            "
+                                                            class="h-3.5 w-3.5"
+                                                        />
+                                                        <Eye
+                                                            v-else
+                                                            class="h-3.5 w-3.5"
+                                                        />
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        @click="copyPassword('service', svc.id)"
+                                                        @click="
+                                                            copyPassword(
+                                                                'service',
+                                                                svc.id,
+                                                            )
+                                                        "
                                                         class="text-muted-foreground hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
-                                                        :disabled="isLoadingPassword[svc.id]"
+                                                        :disabled="
+                                                            isLoadingPassword[
+                                                                svc.id
+                                                            ]
+                                                        "
                                                         title="Copy password"
                                                     >
-                                                        <Check v-if="copiedPasswords.has(svc.id)" class="h-3.5 w-3.5 text-green-500" />
-                                                        <Copy v-else class="h-3.5 w-3.5" />
+                                                        <Check
+                                                            v-if="
+                                                                copiedPasswords.has(
+                                                                    svc.id,
+                                                                )
+                                                            "
+                                                            class="h-3.5 w-3.5 text-green-500"
+                                                        />
+                                                        <Copy
+                                                            v-else
+                                                            class="h-3.5 w-3.5"
+                                                        />
                                                     </button>
                                                 </div>
-                                                <span v-else class="text-muted-foreground px-1.5">—</span>
+                                                <span
+                                                    v-else
+                                                    class="text-muted-foreground px-1.5"
+                                                    >—</span
+                                                >
                                             </TableCell>
                                             <TableCell
                                                 class="text-muted-foreground max-w-[200px] truncate"
@@ -739,8 +965,10 @@ const getServiceIcon = (name) => {
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the {{ deleteType }}
-                    <strong>{{ itemToDelete?.name || 'Unnamed' }}</strong> and remove its data from the system.
+                    This action cannot be undone. This will permanently delete
+                    the {{ deleteType }}
+                    <strong>{{ itemToDelete?.name || "Unnamed" }}</strong> and
+                    remove its data from the system.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

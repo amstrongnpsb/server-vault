@@ -43,12 +43,28 @@ const databaseTypes = ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Other'];
 const customTypeName = ref("");
 const showCustomTypeInput = computed(() => form.type === "Other");
 const showPassword = ref(false);
+const isInitializing = ref(false);
+
+const defaultPorts = {
+    'PostgreSQL': 5432,
+    'MySQL': 3306,
+    'MongoDB': 27017,
+    'Redis': 6379,
+};
+
+watch(() => form.type, (newType) => {
+    if (isInitializing.value) return;
+    if (newType && newType !== 'Other' && defaultPorts[newType]) {
+        form.port = defaultPorts[newType];
+    }
+});
 
 watch(
     () => props.open,
     (isOpen) => {
         if (isOpen) {
             if (props.isEdit && props.database) {
+                isInitializing.value = true;
                 if (props.database.type && !databaseTypes.includes(props.database.type)) {
                     customTypeName.value = props.database.type;
                     form.type = 'Other';
@@ -60,6 +76,7 @@ watch(
                 form.port = props.database.port;
                 form.username = props.database.username;
                 form.credentials = ''; // Leave password empty for edit
+                isInitializing.value = false;
             } else {
                 form.defaults({
                     type: '',
@@ -71,6 +88,9 @@ watch(
                 form.reset();
                 customTypeName.value = '';
                 showPassword.value = false;
+                if (defaultPorts[form.type]) {
+                    form.port = defaultPorts[form.type];
+                }
             }
         }
     }
@@ -86,12 +106,6 @@ const onSubmit = () => {
     }
 
     if (!form.port) {
-        const defaultPorts = {
-            'PostgreSQL': 5432,
-            'MySQL': 3306,
-            'MongoDB': 27017,
-            'Redis': 6379,
-        };
         form.port = defaultPorts[form.type] || '';
     }
 
