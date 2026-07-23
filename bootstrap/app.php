@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\InternalRdpController;
 use App\Http\Controllers\InternalSshController;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\InternalSecret;
@@ -21,6 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 Route::post('/internal/ssh/credentials', [InternalSshController::class, 'credentials']);
                 Route::post('/internal/ssh/mark-active', [InternalSshController::class, 'markActive']);
                 Route::post('/internal/ssh/mark-closed', [InternalSshController::class, 'markClosed']);
+
+                Route::post('/internal/rdp/validate-token', [InternalRdpController::class, 'validateToken']);
+                Route::post('/internal/rdp/credentials', [InternalRdpController::class, 'credentials']);
+                Route::post('/internal/rdp/mark-active', [InternalRdpController::class, 'markActive']);
+                Route::post('/internal/rdp/mark-closed', [InternalRdpController::class, 'markClosed']);
             });
         },
     )

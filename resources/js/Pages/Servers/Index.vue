@@ -674,7 +674,7 @@ const getReactiveStatus = (server) => {
                                                         Details
                                                     </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    v-if="hasPermission('connect servers')"
+                                                    v-if="hasPermission('connect servers') && server.os !== 'Windows'"
                                                     as-child
                                                 >
                                                     <Link
@@ -690,6 +690,25 @@ const getReactiveStatus = (server) => {
                                                             class="mr-2 h-4 w-4"
                                                         />
                                                         Connect
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    v-if="hasPermission('connect servers') && server.os === 'Windows'"
+                                                    as-child
+                                                >
+                                                    <Link
+                                                        :href="
+                                                            route(
+                                                                'servers.rdp',
+                                                                server.id,
+                                                            )
+                                                        "
+                                                        class="flex w-full cursor-pointer items-center"
+                                                    >
+                                                        <Monitor
+                                                            class="mr-2 h-4 w-4"
+                                                        />
+                                                        Remote Desktop
                                                     </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem

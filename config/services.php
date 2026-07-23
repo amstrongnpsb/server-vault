@@ -41,4 +41,9 @@ return [
         'internal_secret' => env('SSH_BRIDGE_INTERNAL_SECRET'),
     ],
 
+    'guacd_bridge' => [
+        'ws_url' => env('GUACD_BRIDGE_WS_URL', 'ws://localhost:8091'),
+        'internal_secret' => env('SSH_BRIDGE_INTERNAL_SECRET'),
+    ],
+
 ];

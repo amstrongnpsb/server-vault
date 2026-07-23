@@ -5,6 +5,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServerController;
 use App\Http\Controllers\ServerDatabaseController;
 use App\Http\Controllers\ServerServiceController;
+use App\Http\Controllers\RdpController;
 use App\Http\Controllers\SshTerminalController;
 use App\Http\Controllers\UserController;
 use App\Models\Server;
@@ -49,6 +50,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/servers/{server}/terminal', [SshTerminalController::class, 'show'])->name('servers.terminal')->middleware('permission:connect servers');
     Route::post('/servers/{server}/connect', [SshTerminalController::class, 'connect'])->name('servers.connect')->middleware('permission:connect servers');
     Route::post('/ssh/disconnect', [SshTerminalController::class, 'disconnect'])->name('ssh.disconnect')->middleware('permission:connect servers');
+
+    Route::get('/servers/{server}/rdp', [RdpController::class, 'show'])->name('servers.rdp')->middleware('permission:connect servers');
+    Route::post('/servers/{server}/rdp-connect', [RdpController::class, 'connect'])->name('servers.rdp-connect')->middleware('permission:connect servers');
 
     // Databases
     Route::post('/servers/{server}/databases', [ServerDatabaseController::class, 'store'])->name('servers.databases.store')->middleware('permission:manage database servers');

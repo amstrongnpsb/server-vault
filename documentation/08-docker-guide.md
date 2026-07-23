@@ -41,7 +41,7 @@ npm run dev
 
 ## Why Hybrid Development?
 
-**Docker** runs: PHP, Nginx, MySQL, Redis, Queue, Reverb, SSH Bridge, Scheduler  
+**Docker** runs: PHP, Nginx, MySQL, Redis, Queue, Reverb, SSH Bridge, RDP Bridge (guacd + guacd-proxy), Scheduler  
 **Native** runs: Vite dev server
 
 **Reason:** Docker on Windows is slow for file watching. Running Vite natively = instant hot reload.
@@ -101,6 +101,15 @@ Required `.env` variable:
 SSH_BRIDGE_INTERNAL_SECRET=your-secret-key    # Must match config/services.php
 SSH_BRIDGE_WS_URL=ws://localhost:9002/terminal-ws  # Frontend WebSocket URL
 ```
+
+### RDP Bridge Configuration
+
+The RDP bridge uses Apache Guacamole for browser-based RDP access:
+- **guacd** — Apache Guacamole proxy daemon (speaks RDP/VNC)
+- **guacd-proxy** — Custom PHP WebSocket tunnel (`bridge/guacd-proxy.php`)
+- Proxied through nginx at `/rdp-ws`
+
+No additional `.env` variables required — the bridge uses `SSH_BRIDGE_INTERNAL_SECRET` for authentication.
 
 ### Broadcast / Reverb Configuration
 
@@ -244,7 +253,7 @@ npm run artisan:prod:optimize
 
 | | Development | Production |
 |---|---|---|
-| Containers | 8 separate | 7 combined |
+| Containers | 10 separate | 9 combined |
 | Vite | Native (hot reload) | Pre-built assets |
 | Opcache | Off | On |
 | Debug | On | Off |
@@ -264,6 +273,8 @@ npm run artisan:prod:optimize
 - **queue** - Background jobs
 - **scheduler** - Runs `php artisan schedule:work` for cron tasks (health checks)
 - **ssh-bridge** - SSH terminal bridge (port 8090, proxied via nginx at `/terminal-ws`)
+- **guacd** - Apache Guacamole RDP engine (port 4822)
+- **guacd-proxy** - RDP WebSocket bridge (port 8091, proxied via nginx at `/rdp-ws`)
 
 ### Production Containers
 
@@ -274,6 +285,8 @@ npm run artisan:prod:optimize
 - **db** - MySQL 8 (internal)
 - **redis** - Redis 7 (internal)
 - **ssh-bridge** - SSH terminal bridge (proxied via nginx at `/terminal-ws`)
+- **guacd** - Apache Guacamole RDP engine (port 4822)
+- **guacd-proxy** - RDP WebSocket bridge (port 8091, proxied via nginx at `/rdp-ws`)
 
 ---
 

@@ -212,6 +212,58 @@ services:
         max-size: "5m"
         max-file: "2"
 
+  guacd:
+    image: guacamole/guacd:latest
+    container_name: servervault-guacd-prod
+    restart: always
+    networks:
+      - servervault
+    expose:
+      - "4822"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  guacd-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: servervault-guacd-proxy-prod
+    restart: always
+    working_dir: /var/www/html
+    command: php bridge/guacd-proxy.php
+    networks:
+      - servervault
+    environment:
+      - APP_URL=http://app:80
+      - BRIDGE_HOST=0.0.0.0
+      - BRIDGE_PORT=8091
+      - GUACD_HOST=guacd
+      - GUACD_PORT=4822
+      - INTERNAL_SECRET=${SSH_BRIDGE_INTERNAL_SECRET}
+    depends_on:
+      app:
+        condition: service_healthy
+      guacd:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   ssh-bridge:
     build:
       context: .

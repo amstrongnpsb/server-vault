@@ -147,6 +147,40 @@ services:
       retries: 3
       start_period: 40s
 
+  guacd:
+    image: guacamole/guacd:latest
+    container_name: servervault-guacd
+    restart: unless-stopped
+    networks:
+      - servervault
+    expose:
+      - "4822"
+
+  guacd-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: servervault-guacd-proxy
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    command: php bridge/guacd-proxy.php
+    networks:
+      - servervault
+    environment:
+      - APP_URL=http://nginx:80
+      - BRIDGE_HOST=0.0.0.0
+      - BRIDGE_PORT=8091
+      - GUACD_HOST=guacd
+      - GUACD_PORT=4822
+      - INTERNAL_SECRET=${SSH_BRIDGE_INTERNAL_SECRET}
+    depends_on:
+      app:
+        condition: service_healthy
+      guacd:
+        condition: service_started
+
   ssh-bridge:
     build:
       context: .
