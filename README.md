@@ -78,8 +78,8 @@ npm run dev
 
 ### Default Login
 ```
-Email:    superadmin@example.com
-Password: password
+Email:    superadmin@test.com
+Password: superadmin123
 ```
 
 ### Daily Development
