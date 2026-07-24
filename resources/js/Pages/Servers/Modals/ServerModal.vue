@@ -271,6 +271,56 @@ const handleAuthMethodChange = (method) => {
                     </p>
                 </div>
 
+                <!-- Operating System -->
+                <div class="space-y-2">
+                    <Label class="text-sm font-medium">
+                        Operating system
+                    </Label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <Select 
+                            :model-value="form.os" 
+                            @update:model-value="(value) => form.os = value"
+                        >
+                            <SelectTrigger
+                                :class="[
+                                    'w-full',
+                                    { 'border-destructive': form.errors.os },
+                                ]"
+                            >
+                                <SelectValue placeholder="Select OS" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectLabel>Operating System</SelectLabel>
+                                    <SelectItem
+                                        v-for="os in osOptions"
+                                        :key="os"
+                                        :value="os"
+                                    >
+                                        {{ os }}
+                                    </SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            v-if="showCustomOsInput"
+                            v-model="customOsName"
+                            type="text"
+                            placeholder="e.g., FreeBSD"
+                            class="w-full"
+                            :class="{
+                                'border-destructive': showCustomOsInput && !customOsName.trim(),
+                            }"
+                        />
+                    </div>
+                    <p
+                        v-if="form.errors.os"
+                        class="text-xs text-destructive"
+                    >
+                        {{ form.errors.os }}
+                    </p>
+                </div>
+
                 <!-- Host/IP and Port -->
                 <div class="grid grid-cols-2 gap-3">
                     <div class="space-y-2">
@@ -315,44 +365,8 @@ const handleAuthMethodChange = (method) => {
                     </div>
                 </div>
 
-                <!-- Operating System and Username -->
+                <!-- Username and Website -->
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-2">
-                        <Label class="text-sm font-medium">
-                            Operating system
-                        </Label>
-                        <Select 
-                            :model-value="form.os" 
-                            @update:model-value="(value) => form.os = value"
-                        >
-                            <SelectTrigger
-                                :class="[
-                                    'w-full',
-                                    { 'border-destructive': form.errors.os },
-                                ]"
-                            >
-                                <SelectValue placeholder="Select OS" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Operating System</SelectLabel>
-                                    <SelectItem
-                                        v-for="os in osOptions"
-                                        :key="os"
-                                        :value="os"
-                                    >
-                                        {{ os }}
-                                    </SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                        <p
-                            v-if="form.errors.os"
-                            class="text-xs text-destructive"
-                        >
-                            {{ form.errors.os }}
-                        </p>
-                    </div>
                     <div class="space-y-2">
                         <Label for="username" class="text-sm font-medium"
                             >Username</Label
@@ -373,25 +387,21 @@ const handleAuthMethodChange = (method) => {
                             {{ form.errors.username }}
                         </p>
                     </div>
-                </div>
-
-                <!-- Custom OS Name (shown when Other is selected) -->
-                <div v-if="showCustomOsInput" class="space-y-2">
-                    <Label for="customOsName" class="text-sm font-medium">
-                        Custom OS Name
-                    </Label>
-                    <Input
-                        id="customOsName"
-                        v-model="customOsName"
-                        type="text"
-                        placeholder="e.g., FreeBSD, Alpine, Arch Linux"
-                        :class="{
-                            'border-destructive': showCustomOsInput && !customOsName.trim(),
-                        }"
-                    />
-                    <p class="text-xs text-muted-foreground">
-                        Enter the specific operating system name
-                    </p>
+                    <div class="space-y-2">
+                        <Label for="website" class="text-sm font-medium">
+                            Website <span class="text-xs text-muted-foreground">(optional)</span>
+                        </Label>
+                        <Input
+                            id="website"
+                            v-model="form.website"
+                            type="url"
+                            placeholder="https://www.example.com"
+                            :class="{ 'border-destructive': form.errors.website }"
+                        />
+                        <p v-if="form.errors.website" class="text-xs text-destructive">
+                            {{ form.errors.website }}
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Authentication Method -->
@@ -512,25 +522,6 @@ const handleAuthMethodChange = (method) => {
                         class="text-xs text-destructive"
                     >
                         {{ form.errors.status }}
-                    </p>
-                </div>
-
-                <!-- Website -->
-                <div class="space-y-2">
-                    <Label for="website" class="text-sm font-medium">
-                        Website <span class="text-xs text-muted-foreground">(optional)</span>
-                    </Label>
-                    <div class="relative">
-                        <Input
-                            id="website"
-                            v-model="form.website"
-                            type="url"
-                            placeholder="https://www.example.com"
-                            :class="{ 'border-destructive': form.errors.website }"
-                        />
-                    </div>
-                    <p v-if="form.errors.website" class="text-xs text-destructive">
-                        {{ form.errors.website }}
                     </p>
                 </div>
 
