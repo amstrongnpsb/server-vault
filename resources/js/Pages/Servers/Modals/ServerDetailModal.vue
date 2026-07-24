@@ -36,6 +36,7 @@ import {
     Component,
     Video,
     Zap,
+    ExternalLink,
     Eye,
     EyeOff,
     Copy,
@@ -236,6 +237,10 @@ const handleHeaderAction = () => {
     } else {
         openAddService();
     }
+};
+
+const browseDatabase = (db) => {
+    router.visit(route('databases.show', db.id));
 };
 
 const handleSaved = () => {
@@ -623,6 +628,15 @@ const getServiceIcon = (name) => {
                                                     <DropdownMenuContent
                                                         align="end"
                                                     >
+                                                        <DropdownMenuItem
+                                                            @click="browseDatabase(db)"
+                                                            class="cursor-pointer"
+                                                        >
+                                                            <ExternalLink
+                                                                class="mr-2 h-4 w-4"
+                                                            />
+                                                            Browse
+                                                        </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             @click="
                                                                 openEditDatabase(

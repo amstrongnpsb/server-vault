@@ -68,6 +68,7 @@ const form = useForm({
     status: "Offline",
     username: "",
     credentials: "",
+    website: "",
     description: "",
 });
 
@@ -82,8 +83,9 @@ const initializeForm = async (server = null) => {
         form.status = server.status || "Offline";
         form.username = server.username || "";
         form.credentials = "";
+        form.website = server.website || "";
         form.description = server.description || "";
-        
+
         // Check if OS is a custom one (not in standard options)
         const standardOs = ['Ubuntu', 'Debian', 'CentOS', 'Windows', 'Other'];
         if (server.os && !standardOs.includes(server.os)) {
@@ -119,6 +121,7 @@ const initializeForm = async (server = null) => {
         form.status = "Offline";
         form.username = "";
         form.credentials = "";
+        form.website = "";
         form.description = "";
         authMethod.value = "password";
         customOsName.value = "";
@@ -512,10 +515,29 @@ const handleAuthMethodChange = (method) => {
                     </p>
                 </div>
 
+                <!-- Website -->
+                <div class="space-y-2">
+                    <Label for="website" class="text-sm font-medium">
+                        Website <span class="text-xs text-muted-foreground">(optional)</span>
+                    </Label>
+                    <div class="relative">
+                        <Input
+                            id="website"
+                            v-model="form.website"
+                            type="url"
+                            placeholder="https://www.example.com"
+                            :class="{ 'border-destructive': form.errors.website }"
+                        />
+                    </div>
+                    <p v-if="form.errors.website" class="text-xs text-destructive">
+                        {{ form.errors.website }}
+                    </p>
+                </div>
+
                 <!-- Description -->
                 <div class="space-y-2">
                     <Label for="description" class="text-sm font-medium"
-                        >Description (optional)</Label
+                        >Description <span class="text-xs text-muted-foreground">(optional)</span></Label
                     >
                     <Textarea
                         id="description"

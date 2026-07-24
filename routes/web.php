@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DatabaseController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServerController;
@@ -58,6 +59,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/servers/{server}/databases', [ServerDatabaseController::class, 'store'])->name('servers.databases.store')->middleware('permission:manage database servers');
     Route::put('/databases/{serverDatabase}', [ServerDatabaseController::class, 'update'])->name('servers.databases.update')->middleware('permission:manage database servers');
     Route::delete('/databases/{serverDatabase}', [ServerDatabaseController::class, 'destroy'])->name('servers.databases.destroy')->middleware('permission:manage database servers');
+
+    // Database Browser
+    Route::get('/databases/{serverDatabase}', [DatabaseController::class, 'show'])->name('databases.show')->middleware('permission:manage database servers');
+    Route::post('/databases/{serverDatabase}/test', [DatabaseController::class, 'test'])->name('databases.test')->middleware('permission:manage database servers');
+    Route::get('/databases/{serverDatabase}/schemas', [DatabaseController::class, 'schemas'])->name('databases.schemas')->middleware('permission:manage database servers');
+    Route::get('/databases/{serverDatabase}/tables', [DatabaseController::class, 'tables'])->name('databases.tables')->middleware('permission:manage database servers');
+    Route::get('/databases/{serverDatabase}/columns', [DatabaseController::class, 'columns'])->name('databases.columns')->middleware('permission:manage database servers');
+    Route::get('/databases/{serverDatabase}/browse', [DatabaseController::class, 'browse'])->name('databases.browse')->middleware('permission:manage database servers');
+    Route::post('/databases/{serverDatabase}/query', [DatabaseController::class, 'query'])->name('databases.query')->middleware('permission:manage database servers');
 
     // Services
     Route::post('/servers/{server}/services', [ServerServiceController::class, 'store'])->name('servers.services.store')->middleware('permission:manage server services');

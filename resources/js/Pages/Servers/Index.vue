@@ -474,6 +474,7 @@ const getReactiveStatus = (server) => {
                                     <TableHead>Name</TableHead>
                                     <TableHead>Host</TableHead>
                                     <TableHead>OS</TableHead>
+                                    <TableHead>Website</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Created at</TableHead>
                                     <TableHead class="text-right"
@@ -529,7 +530,7 @@ const getReactiveStatus = (server) => {
                                 <!-- No Results State -->
                                 <TableRow v-else-if="servers.data.length === 0">
                                     <TableCell
-                                        colspan="6"
+                                        colspan="7"
                                         class="text-center text-muted-foreground py-12"
                                     >
                                         <div
@@ -586,6 +587,19 @@ const getReactiveStatus = (server) => {
                                                 />
                                                 {{ server.os }}
                                             </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <a
+                                                v-if="server.website"
+                                                :href="server.website"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="text-primary hover:underline text-sm max-w-[200px] truncate block"
+                                                :title="server.website"
+                                            >
+                                                {{ server.website }}
+                                            </a>
+                                            <span v-else class="text-muted-foreground">—</span>
                                         </TableCell>
                                         <TableCell>
                                             <div class="flex items-center gap-1">
