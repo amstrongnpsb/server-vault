@@ -20,6 +20,8 @@ import {
     X,
     Monitor,
     Server as ServerIcon,
+    Database,
+    Wrench,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import axios from "axios";
@@ -61,7 +63,14 @@ const mapNodes = (dataNodes) =>
         id: n.id,
         type: "custom",
         position: { x: n.canvas_x ?? 250, y: n.canvas_y ?? 250 },
-        data: { name: n.name, host: n.host, os: n.os, status: n.status },
+        data: {
+            name: n.name,
+            host: n.host,
+            os: n.os,
+            status: n.status,
+            databases: n.databases ?? [],
+            services: n.services ?? [],
+        },
     }));
 
 const buildEdge = (e, style) => ({
@@ -246,6 +255,8 @@ const handleAddServers = (serversToAdd) => {
                 host: server.host,
                 os: server.os,
                 status: server.status,
+                databases: [],
+                services: [],
             },
         });
     });
@@ -427,6 +438,48 @@ onMounted(() => {
                                         >
                                             {{ data.status }}
                                         </Badge>
+                                    </div>
+                                    <div
+                                        v-if="
+                                            data.databases?.length > 0 ||
+                                            data.services?.length > 0
+                                        "
+                                        class="mt-2 flex flex-col gap-1 border-t border-border/50 pt-2"
+                                    >
+                                        <div
+                                            v-if="data.databases?.length > 0"
+                                            class="flex flex-wrap items-center gap-1.5"
+                                        >
+                                            <Database
+                                                class="h-3 w-3 shrink-0 text-muted-foreground"
+                                            />
+                                            <span
+                                                class="text-[10px] text-muted-foreground"
+                                            >
+                                                {{
+                                                    data.databases
+                                                        .map((d) => d.name || d.type)
+                                                        .join(", ")
+                                                }}
+                                            </span>
+                                        </div>
+                                        <div
+                                            v-if="data.services?.length > 0"
+                                            class="flex flex-wrap items-center gap-1.5"
+                                        >
+                                            <Wrench
+                                                class="h-3 w-3 shrink-0 text-muted-foreground"
+                                            />
+                                            <span
+                                                class="text-[10px] text-muted-foreground"
+                                            >
+                                                {{
+                                                    data.services
+                                                        .map((s) => s.name)
+                                                        .join(", ")
+                                                }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -177,6 +177,8 @@ class ServerStructureController extends Controller
             'status' => $server->status,
             'canvas_x' => $server->canvas_x,
             'canvas_y' => $server->canvas_y,
+            'databases' => $server->databases()->get(['id', 'type', 'name'])->toArray(),
+            'services' => $server->services()->get(['id', 'name', 'port'])->toArray(),
         ];
     }
 
