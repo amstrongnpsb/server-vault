@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Spatie\Permission\Models\Role as SpatieRole;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Spatie\Permission\Models\Role as SpatieRole;
 
 class Role extends SpatieRole
 {
@@ -15,6 +15,7 @@ class Role extends SpatieRole
      * @var string
      */
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
 
     /**

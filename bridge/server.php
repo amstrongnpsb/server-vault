@@ -1,9 +1,9 @@
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
-use phpseclib3\Net\SSH2;
 use phpseclib3\Common\Functions\Strings;
+use phpseclib3\Net\SSH2;
 use React\EventLoop\Loop;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpServer;
@@ -13,7 +13,7 @@ $bridgePort = getenv('BRIDGE_PORT') ?: '8090';
 $appUrl = getenv('APP_URL') ?: 'http://localhost';
 $internalSecret = getenv('INTERNAL_SECRET');
 
-if (!$internalSecret) {
+if (! $internalSecret) {
     echo "[ERROR] INTERNAL_SECRET environment variable is required.\n";
     exit(1);
 }
@@ -24,16 +24,15 @@ function internalPost(string $path, array $data): ?array
 {
     global $appUrl, $internalSecret;
 
-    $url = rtrim($appUrl, '/') . $path;
+    $url = rtrim($appUrl, '/').$path;
     $payload = json_encode($data);
 
     $ctx = stream_context_create([
         'http' => [
             'method' => 'POST',
-            'header' =>
-                "Content-Type: application/json\r\n" .
-                "X-Internal-Secret: $internalSecret\r\n" .
-                "Content-Length: " . strlen($payload) . "\r\n",
+            'header' => "Content-Type: application/json\r\n".
+                "X-Internal-Secret: $internalSecret\r\n".
+                'Content-Length: '.strlen($payload)."\r\n",
             'content' => $payload,
             'timeout' => 5,
         ],
@@ -50,7 +49,7 @@ function internalPost(string $path, array $data): ?array
 
 function performHandshake(ConnectionInterface $conn, string $request): ?array
 {
-    if (!preg_match('/GET (.*?) HTTP/', $request, $matches)) {
+    if (! preg_match('/GET (.*?) HTTP/', $request, $matches)) {
         return null;
     }
 
@@ -63,8 +62,8 @@ function performHandshake(ConnectionInterface $conn, string $request): ?array
     if ($query) {
         parse_str($query, $params);
         $token = $params['token'] ?? null;
-        $cols = (int)($params['cols'] ?? 80);
-        $rows = (int)($params['rows'] ?? 24);
+        $cols = (int) ($params['cols'] ?? 80);
+        $rows = (int) ($params['rows'] ?? 24);
     }
 
     $lines = explode("\r\n", $request);
@@ -75,20 +74,21 @@ function performHandshake(ConnectionInterface $conn, string $request): ?array
             break;
         }
     }
-    if (!$wsKey) {
-        echo "[!] Could not find Sec-WebSocket-Key in " . count($lines) . " lines\n";
+    if (! $wsKey) {
+        echo '[!] Could not find Sec-WebSocket-Key in '.count($lines)." lines\n";
         foreach ($lines as $i => $l) {
-            echo "  line $i: " . bin2hex($l) . "\n";
+            echo "  line $i: ".bin2hex($l)."\n";
         }
+
         return null;
     }
 
-    $raw = sha1($wsKey . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true);
+    $raw = sha1($wsKey.'258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true);
     $acceptKey = base64_encode($raw);
     echo "[.] WS: key='$wsKey' accept='$acceptKey'\n";
 
     $response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: $acceptKey\r\n\r\n";
-    echo "[.] WS resp: " . bin2hex($response) . "\n";
+    echo '[.] WS resp: '.bin2hex($response)."\n";
 
     $conn->write($response);
 
@@ -103,12 +103,12 @@ function encodeFrame(string $data): string
     if ($len <= 125) {
         $frame .= chr($len);
     } elseif ($len <= 65535) {
-        $frame .= chr(126) . pack('n', $len);
+        $frame .= chr(126).pack('n', $len);
     } else {
-        $frame .= chr(127) . pack('J', $len);
+        $frame .= chr(127).pack('J', $len);
     }
 
-    return $frame . $data;
+    return $frame.$data;
 }
 
 function decodeFrame(string $data): ?string
@@ -144,6 +144,7 @@ function decodeFrame(string $data): ?string
         for ($i = 0; $i < $payloadLen; $i++) {
             $decoded .= chr(ord($payload[$i]) ^ ord($mask[$i % 4]));
         }
+
         return $decoded;
     }
 
@@ -161,7 +162,9 @@ function sendWindowChange(SSH2 $ssh, int $cols, int $rows): void
         $channelId = $ssh->getInteractiveChannelId();
         $serverChannel = $serverChannels[$channelId] ?? null;
 
-        if ($serverChannel === null) return;
+        if ($serverChannel === null) {
+            return;
+        }
 
         $packet = Strings::packSSH2(
             'CNsbsN4',
@@ -178,7 +181,7 @@ function sendWindowChange(SSH2 $ssh, int $cols, int $rows): void
         $method = $ref->getMethod('send_binary_packet');
         $method->setAccessible(true);
         $method->invoke($ssh, $packet);
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         // reflection or send failure — ignore
     }
 }
@@ -212,20 +215,23 @@ $server->on('connection', function (ConnectionInterface $conn) use (
         &$termRows,
         $loop
     ) {
-        if (!$handshakeDone) {
+        if (! $handshakeDone) {
             $buffer .= $data;
 
             if (str_contains($buffer, "\r\n\r\n")) {
                 echo "[.] RAW request lines:\n";
                 foreach (explode("\r\n", $buffer) as $i => $l) {
-                    if ($l !== '') echo "  L$i: $l\n";
+                    if ($l !== '') {
+                        echo "  L$i: $l\n";
+                    }
                 }
 
                 $result = performHandshake($conn, $buffer);
 
-                if (!$result || !$result['token']) {
+                if (! $result || ! $result['token']) {
                     echo "[!] Invalid handshake or missing token\n";
                     $conn->end();
+
                     return;
                 }
 
@@ -239,10 +245,11 @@ $server->on('connection', function (ConnectionInterface $conn) use (
                     'token' => $token,
                 ]);
 
-                if (!$sessionData || !$sessionData['valid']) {
+                if (! $sessionData || ! $sessionData['valid']) {
                     echo "[!] Invalid or expired token: $token\n";
                     $conn->write(encodeFrame("\x1b[31mConnection rejected: invalid or expired token.\x1b[0m\r\n"));
                     $conn->end();
+
                     return;
                 }
 
@@ -252,69 +259,75 @@ $server->on('connection', function (ConnectionInterface $conn) use (
                     'server_id' => $sessionData['server_id'],
                 ]);
 
-                if (!$credData || !$credData['credentials']) {
+                if (! $credData || ! $credData['credentials']) {
                     $conn->write(encodeFrame("\x1b[31mFailed to retrieve credentials.\x1b[0m\r\n"));
                     $conn->end();
+
                     return;
                 }
 
+                try {
+                    $ssh = new SSH2($sessionData['host'], $sessionData['port'], 10);
+
+                    $loginUsername = $sessionData['username'];
+                    $loginPassword = $credData['credentials'];
+                    echo "[.] Connecting to {$sessionData['host']}:{$sessionData['port']} as '$loginUsername' (pass_len=".strlen($loginPassword ?? '').")\n";
+
+                    if (! $ssh->login($loginUsername, $loginPassword)) {
+                        echo "[!] Auth failed for session $sessionId\n";
+                        $conn->write(encodeFrame("\x1b[31mAuthentication failed.\x1b[0m\r\n"));
+                        $conn->end();
+
+                        return;
+                    }
+
+                    $ssh->setTerminal('xterm-256color');
+                    $ssh->setWindowSize($termCols, $termRows);
+                    $ssh->setTimeout(5);
+
                     try {
-                        $ssh = new SSH2($sessionData['host'], $sessionData['port'], 10);
+                        $initial = $ssh->read();
+                    } catch (Exception $e) {
+                        echo '[!] Shell init error: '.$e->getMessage()."\n";
+                        $conn->write(encodeFrame("\x1b[31mShell init error: ".$e->getMessage()."\x1b[0m\r\n"));
+                        $conn->end();
 
-                        $loginUsername = $sessionData['username'];
-                        $loginPassword = $credData['credentials'];
-                        echo "[.] Connecting to {$sessionData['host']}:{$sessionData['port']} as '$loginUsername' (pass_len=" . strlen($loginPassword ?? '') . ")\n";
+                        return;
+                    }
 
-                        if (!$ssh->login($loginUsername, $loginPassword)) {
-                            echo "[!] Auth failed for session $sessionId\n";
-                            $conn->write(encodeFrame("\x1b[31mAuthentication failed.\x1b[0m\r\n"));
-                            $conn->end();
+                    $ssh->setTimeout(0.05);
+                    $sessions[$sessionId] = ['ssh' => $ssh, 'conn' => $conn];
+                    internalPost('/internal/ssh/mark-active', [
+                        'session_id' => $sessionId,
+                    ]);
+                    echo "[+] Session $sessionId established\n";
+
+                    if ($initial !== '' && $initial !== null) {
+                        $conn->write(encodeFrame($initial));
+                    }
+
+                    $loop->addPeriodicTimer(0.05, function () use ($sessionId, &$sessions) {
+                        $entry = $sessions[$sessionId] ?? null;
+                        if (! $entry) {
                             return;
                         }
-
-                        $ssh->setTerminal('xterm-256color');
-                        $ssh->setWindowSize($termCols, $termRows);
-                        $ssh->setTimeout(5);
 
                         try {
-                            $initial = $ssh->read();
-                        } catch (\Exception $e) {
-                            echo "[!] Shell init error: " . $e->getMessage() . "\n";
-                            $conn->write(encodeFrame("\x1b[31mShell init error: " . $e->getMessage() . "\x1b[0m\r\n"));
-                            $conn->end();
-                            return;
-                        }
-
-                        $ssh->setTimeout(0.05);
-                        $sessions[$sessionId] = ['ssh' => $ssh, 'conn' => $conn];
-                        internalPost('/internal/ssh/mark-active', [
-                            'session_id' => $sessionId,
-                        ]);
-                        echo "[+] Session $sessionId established\n";
-
-                        if ($initial !== '' && $initial !== null) {
-                            $conn->write(encodeFrame($initial));
-                        }
-
-                        $loop->addPeriodicTimer(0.05, function () use ($sessionId, &$sessions) {
-                            $entry = $sessions[$sessionId] ?? null;
-                            if (!$entry) return;
-
-                            try {
-                                $output = $entry['ssh']->read();
-                                if ($output !== '' && $output !== null) {
-                                    $entry['conn']->write(encodeFrame($output));
-                                }
-                            } catch (\Exception $e) {
-                                // connection closed
+                            $output = $entry['ssh']->read();
+                            if ($output !== '' && $output !== null) {
+                                $entry['conn']->write(encodeFrame($output));
                             }
-                        });
-                } catch (\Exception $e) {
-                    echo "[!] SSH connection failed: " . $e->getMessage() . "\n";
-                    $conn->write(encodeFrame("\x1b[31mConnection failed: " . $e->getMessage() . "\x1b[0m\r\n"));
+                        } catch (Exception $e) {
+                            // connection closed
+                        }
+                    });
+                } catch (Exception $e) {
+                    echo '[!] SSH connection failed: '.$e->getMessage()."\n";
+                    $conn->write(encodeFrame("\x1b[31mConnection failed: ".$e->getMessage()."\x1b[0m\r\n"));
                     $conn->end();
                 }
             }
+
             return;
         }
 
@@ -325,24 +338,25 @@ $server->on('connection', function (ConnectionInterface $conn) use (
             if ($ssh) {
                 $ssh->disconnect();
             }
+
             return;
         }
 
         if ($ssh && $decoded !== '') {
             $resize = json_decode($decoded, true);
             if (is_array($resize) && ($resize['type'] ?? '') === 'resize') {
-                $cols = (int)($resize['cols'] ?? 80);
-                $rows = (int)($resize['rows'] ?? 24);
+                $cols = (int) ($resize['cols'] ?? 80);
+                $rows = (int) ($resize['rows'] ?? 24);
                 try {
                     $ssh->setWindowSize($cols, $rows);
                     sendWindowChange($ssh, $cols, $rows);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     // ignore
                 }
             } else {
                 try {
                     $ssh->write($decoded);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     // connection closed
                 }
             }
@@ -361,7 +375,7 @@ $server->on('connection', function (ConnectionInterface $conn) use (
         if ($ssh) {
             try {
                 $ssh->disconnect();
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // already disconnected
             }
         }

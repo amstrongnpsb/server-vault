@@ -16,7 +16,7 @@ class InternalSshController extends Controller
             ->where('token_expires_at', '>', now())
             ->first();
 
-        if (!$session) {
+        if (! $session) {
             return response()->json(['valid' => false], 404);
         }
 

@@ -12,7 +12,7 @@ class InternalSecret
     {
         $secret = config('services.ssh_bridge.internal_secret');
 
-        if (!$secret || $request->header('X-Internal-Secret') !== $secret) {
+        if (! $secret || $request->header('X-Internal-Secret') !== $secret) {
             abort(403);
         }
 

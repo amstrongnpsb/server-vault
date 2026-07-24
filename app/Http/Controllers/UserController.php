@@ -22,7 +22,7 @@ class UserController extends Controller
         $roleFilter = request('role');
 
         // Convert comma-separated string to array if needed (for URL compatibility)
-        if (is_string($roleFilter) && !empty($roleFilter)) {
+        if (is_string($roleFilter) && ! empty($roleFilter)) {
             $roleFilter = explode(',', $roleFilter);
         }
 
@@ -56,7 +56,7 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        if (isset($validated['roles']) && is_array($validated['roles']) && !empty($validated['roles'])) {
+        if (isset($validated['roles']) && is_array($validated['roles']) && ! empty($validated['roles'])) {
             $user->syncRoles($validated['roles']);
         }
 
@@ -76,7 +76,7 @@ class UserController extends Controller
             'email' => $validated['email'],
         ]);
 
-        if (isset($validated['password']) && !empty($validated['password'])) {
+        if (isset($validated['password']) && ! empty($validated['password'])) {
             $user->update([
                 'password' => Hash::make($validated['password']),
             ]);

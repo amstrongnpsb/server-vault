@@ -53,7 +53,7 @@ class RoleController extends Controller
         if ($request->permissions !== null) {
             $permissions = $request->permissions;
 
-            if ($role->name === 'superadmin' && !in_array('manage roles', $permissions)) {
+            if ($role->name === 'superadmin' && ! in_array('manage roles', $permissions)) {
                 $permissions[] = 'manage roles';
             }
 
@@ -69,8 +69,8 @@ class RoleController extends Controller
     public function destroy(Role $role): RedirectResponse
     {
         if ($role->name === 'superadmin') {
-        return redirect()->route('roles.index')
-            ->with('error', 'The superadmin role cannot be deleted.');
+            return redirect()->route('roles.index')
+                ->with('error', 'The superadmin role cannot be deleted.');
         }
 
         $name = $role->display_name ?: $role->name;

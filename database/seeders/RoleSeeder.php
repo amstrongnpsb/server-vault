@@ -34,6 +34,8 @@ class RoleSeeder extends Seeder
             'duplicate servers',
             'manage database servers',
             'manage server services',
+            'view server structure',
+            'edit server structure',
         ];
 
         foreach ($permissions as $permission) {
@@ -80,6 +82,8 @@ class RoleSeeder extends Seeder
             'connect servers',
             'manage database servers',
             'manage server services',
+            'view server structure',
+            'edit server structure',
         ]);
 
         // Assign basic permissions to user

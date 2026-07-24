@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Spatie\Permission\Models\Permission as SpatiePermission;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Spatie\Permission\Models\Permission as SpatiePermission;
 
 class Permission extends SpatiePermission
 {
@@ -15,6 +15,7 @@ class Permission extends SpatiePermission
      * @var string
      */
     protected $keyType = 'string';
+
     protected $primaryKey = 'id';
 
     /**

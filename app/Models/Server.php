@@ -17,11 +17,6 @@ class Server extends Model
 
     const STATUS_OFFLINE = 'Offline';
 
-    /**
-     * The attributes that are not mass assignable.
-     *
-     * @var list<string>
-     */
     protected $guarded = ['id'];
 
     /**
@@ -44,20 +39,24 @@ class Server extends Model
         ];
     }
 
-    /**
-     * Get the databases for this server.
-     */
     public function databases(): HasMany
     {
         return $this->hasMany(ServerDatabase::class);
     }
 
-    /**
-     * Get the services for this server.
-     */
     public function services(): HasMany
     {
         return $this->hasMany(ServerService::class);
+    }
+
+    public function outgoingConnections(): HasMany
+    {
+        return $this->hasMany(ServerConnection::class, 'source_server_id');
+    }
+
+    public function incomingConnections(): HasMany
+    {
+        return $this->hasMany(ServerConnection::class, 'target_server_id');
     }
 
     /**

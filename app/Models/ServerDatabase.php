@@ -53,7 +53,7 @@ class ServerDatabase extends Model
      */
     public function getHasCredentialsAttribute(): bool
     {
-        return !empty($this->credentials);
+        return ! empty($this->credentials);
     }
 
     /**
@@ -71,6 +71,4 @@ class ServerDatabase extends Model
             return $this->credentials;
         }
     }
-
-
 }

@@ -1,11 +1,11 @@
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
 use React\EventLoop\Loop;
 use React\Socket\ConnectionInterface;
-use React\Socket\TcpServer;
 use React\Socket\Connector;
+use React\Socket\TcpServer;
 
 $bridgeUrl = getenv('BRIDGE_HOST') ?: '0.0.0.0';
 $bridgePort = getenv('BRIDGE_PORT') ?: '8091';
@@ -14,7 +14,7 @@ $guacdPort = getenv('GUACD_PORT') ?: '4822';
 $appUrl = getenv('APP_URL') ?: 'http://localhost';
 $internalSecret = getenv('INTERNAL_SECRET');
 
-if (!$internalSecret) {
+if (! $internalSecret) {
     echo "[ERROR] INTERNAL_SECRET environment variable is required.\n";
     exit(1);
 }
@@ -25,15 +25,14 @@ function internalPost(string $path, array $data): ?array
 {
     global $appUrl, $internalSecret;
 
-    $url = rtrim($appUrl, '/') . $path;
+    $url = rtrim($appUrl, '/').$path;
     $payload = json_encode($data);
 
     $ctx = stream_context_create([
         'http' => [
             'method' => 'POST',
-            'header' =>
-                "Content-Type: application/json\r\n" .
-                "Content-Length: " . strlen($payload) . "\r\n" .
+            'header' => "Content-Type: application/json\r\n".
+                'Content-Length: '.strlen($payload)."\r\n".
                 "X-Internal-Secret: $internalSecret\r\n",
             'content' => $payload,
             'timeout' => 5,
@@ -44,12 +43,14 @@ function internalPost(string $path, array $data): ?array
     $result = @file_get_contents($url, false, $ctx);
     if ($result === false) {
         echo "[!] internalPost failed for $path\n";
+
         return null;
     }
 
     $decoded = json_decode($result, true);
-    if (!$decoded) {
+    if (! $decoded) {
         echo "[!] internalPost bad JSON from $path: $result\n";
+
         return null;
     }
 
@@ -59,16 +60,17 @@ function internalPost(string $path, array $data): ?array
 function guacInstruction(string $opcode, string ...$args): string
 {
     $parts = [];
-    $parts[] = strlen($opcode) . '.' . $opcode;
+    $parts[] = strlen($opcode).'.'.$opcode;
     foreach ($args as $arg) {
-        $parts[] = strlen($arg) . '.' . $arg;
+        $parts[] = strlen($arg).'.'.$arg;
     }
-    return implode(',', $parts) . ';';
+
+    return implode(',', $parts).';';
 }
 
 function performHandshake(ConnectionInterface $conn, string $request): ?array
 {
-    if (!preg_match('/GET (.*?) HTTP/', $request, $matches)) {
+    if (! preg_match('/GET (.*?) HTTP/', $request, $matches)) {
         return null;
     }
 
@@ -91,12 +93,13 @@ function performHandshake(ConnectionInterface $conn, string $request): ?array
             $wsProtocol = trim(substr($line, 24));
         }
     }
-    if (!$wsKey) {
+    if (! $wsKey) {
         echo "[!] Could not find Sec-WebSocket-Key\n";
+
         return null;
     }
 
-    $raw = sha1($wsKey . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true);
+    $raw = sha1($wsKey.'258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true);
     $acceptKey = base64_encode($raw);
 
     $response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: $acceptKey";
@@ -117,12 +120,12 @@ function encodeFrame(string $data): string
     if ($len <= 125) {
         $frame .= chr($len);
     } elseif ($len <= 65535) {
-        $frame .= chr(126) . pack('n', $len);
+        $frame .= chr(126).pack('n', $len);
     } else {
-        $frame .= chr(127) . pack('J', $len);
+        $frame .= chr(127).pack('J', $len);
     }
 
-    return $frame . $data;
+    return $frame.$data;
 }
 
 function decodeFrame(string $data): ?string
@@ -158,6 +161,7 @@ function decodeFrame(string $data): ?string
         for ($i = 0; $i < $payloadLen; $i++) {
             $decoded .= chr(ord($payload[$i]) ^ ord($mask[$i % 4]));
         }
+
         return $decoded;
     }
 
@@ -167,18 +171,24 @@ function decodeFrame(string $data): ?string
 function parseGuacInstruction(string $raw): ?array
 {
     $parts = explode(',', $raw);
-    if (count($parts) < 1) return null;
+    if (count($parts) < 1) {
+        return null;
+    }
 
     $first = $parts[0];
     $dotPos = strpos($first, '.');
-    if ($dotPos === false) return null;
+    if ($dotPos === false) {
+        return null;
+    }
     $opcode = substr($first, $dotPos + 1);
 
     $args = [];
     for ($i = 1; $i < count($parts); $i++) {
         $part = $parts[$i];
         $dotPos = strpos($part, '.');
-        if ($dotPos === false) continue;
+        if ($dotPos === false) {
+            continue;
+        }
         $args[] = substr($part, $dotPos + 1);
     }
 
@@ -203,11 +213,11 @@ function extractGuacInstructions(string $buf): array
             }
 
             $sizeStr = substr($buf, $cursor, $dot - $cursor);
-            if (!ctype_digit($sizeStr)) {
+            if (! ctype_digit($sizeStr)) {
                 break 2;
             }
 
-            $size = (int)$sizeStr;
+            $size = (int) $sizeStr;
             $valueEnd = $dot + 1 + $size;
 
             if ($valueEnd >= $len) {
@@ -225,13 +235,14 @@ function extractGuacInstructions(string $buf): array
 
             if ($sep === ',') {
                 $cursor = $valueEnd + 1;
+
                 continue;
             }
 
             break 2;
         }
 
-        if (!$complete) {
+        if (! $complete) {
             break;
         }
     }
@@ -242,94 +253,94 @@ function extractGuacInstructions(string $buf): array
 function buildRdpArgMap(string $host, string $port, string $username, string $password, string $domain): array
 {
     return [
-        'hostname'                 => $host,
-        'port'                     => $port,
-        'timeout'                  => '',
-        'domain'                   => $domain,
-        'username'                 => $username,
-        'password'                 => $password,
-        'width'                    => '1920',
-        'height'                   => '1080',
-        'dpi'                      => '96',
-        'initial-program'          => '',
-        'color-depth'              => '',
-        'disable-audio'            => '',
-        'enable-printing'          => '',
-        'printer-name'             => '',
-        'enable-drive'             => '',
-        'drive-name'               => '',
-        'drive-path'               => '',
-        'create-drive-path'        => '',
-        'disable-download'         => '',
-        'disable-upload'           => '',
-        'console'                  => '',
-        'console-audio'            => '',
-        'server-layout'            => '',
-        'security'                 => 'nla',
-        'ignore-cert'              => 'true',
-        'cert-tofu'                => '',
-        'cert-fingerprints'        => '',
-        'disable-auth'             => '',
-        'remote-app'               => '',
-        'remote-app-dir'           => '',
-        'remote-app-args'          => '',
-        'static-channels'          => '',
-        'client-name'              => 'ServerVault',
-        'enable-wallpaper'         => '',
-        'enable-theming'           => '',
-        'enable-font-smoothing'    => '',
-        'enable-full-window-drag'  => '',
+        'hostname' => $host,
+        'port' => $port,
+        'timeout' => '',
+        'domain' => $domain,
+        'username' => $username,
+        'password' => $password,
+        'width' => '1920',
+        'height' => '1080',
+        'dpi' => '96',
+        'initial-program' => '',
+        'color-depth' => '',
+        'disable-audio' => '',
+        'enable-printing' => '',
+        'printer-name' => '',
+        'enable-drive' => '',
+        'drive-name' => '',
+        'drive-path' => '',
+        'create-drive-path' => '',
+        'disable-download' => '',
+        'disable-upload' => '',
+        'console' => '',
+        'console-audio' => '',
+        'server-layout' => '',
+        'security' => 'nla',
+        'ignore-cert' => 'true',
+        'cert-tofu' => '',
+        'cert-fingerprints' => '',
+        'disable-auth' => '',
+        'remote-app' => '',
+        'remote-app-dir' => '',
+        'remote-app-args' => '',
+        'static-channels' => '',
+        'client-name' => 'ServerVault',
+        'enable-wallpaper' => '',
+        'enable-theming' => '',
+        'enable-font-smoothing' => '',
+        'enable-full-window-drag' => '',
         'enable-desktop-composition' => '',
-        'enable-menu-animations'   => '',
-        'disable-bitmap-caching'       => '',
-        'disable-offscreen-caching'    => '',
-        'disable-glyph-caching'        => '',
-        'disable-gfx'                  => '',
-        'preconnection-id'             => '',
-        'preconnection-blob'           => '',
-        'timezone'                     => 'UTC',
-        'enable-sftp'                  => '',
-        'sftp-hostname'                => '',
-        'sftp-host-key'                => '',
-        'sftp-port'                    => '',
-        'sftp-timeout'                 => '',
-        'sftp-username'                => '',
-        'sftp-password'                => '',
-        'sftp-private-key'             => '',
-        'sftp-passphrase'              => '',
-        'sftp-public-key'              => '',
-        'sftp-directory'               => '',
-        'sftp-root-directory'          => '',
-        'sftp-server-alive-interval'   => '',
-        'sftp-disable-download'        => '',
-        'sftp-disable-upload'          => '',
-        'recording-path'               => '',
-        'recording-name'               => '',
-        'recording-exclude-output'     => '',
-        'recording-exclude-mouse'      => '',
-        'recording-exclude-touch'      => '',
-        'recording-include-keys'       => '',
-        'create-recording-path'        => '',
-        'recording-write-existing'     => '',
-        'resize-method'                => 'display-update',
-        'enable-audio-input'           => '',
-        'enable-touch'                 => '',
-        'read-only'                    => '',
-        'gateway-hostname'             => '',
-        'gateway-port'                 => '',
-        'gateway-domain'               => '',
-        'gateway-username'             => '',
-        'gateway-password'             => '',
-        'load-balance-info'            => '',
-        'disable-copy'             => '',
-        'disable-paste'            => '',
-        'wol-send-packet'          => '',
-        'wol-mac-addr'             => '',
-        'wol-broadcast-addr'       => '',
-        'wol-udp-port'             => '',
-        'wol-wait-time'            => '',
-        'force-lossless'           => '',
-        'normalize-clipboard'      => '',
+        'enable-menu-animations' => '',
+        'disable-bitmap-caching' => '',
+        'disable-offscreen-caching' => '',
+        'disable-glyph-caching' => '',
+        'disable-gfx' => '',
+        'preconnection-id' => '',
+        'preconnection-blob' => '',
+        'timezone' => 'UTC',
+        'enable-sftp' => '',
+        'sftp-hostname' => '',
+        'sftp-host-key' => '',
+        'sftp-port' => '',
+        'sftp-timeout' => '',
+        'sftp-username' => '',
+        'sftp-password' => '',
+        'sftp-private-key' => '',
+        'sftp-passphrase' => '',
+        'sftp-public-key' => '',
+        'sftp-directory' => '',
+        'sftp-root-directory' => '',
+        'sftp-server-alive-interval' => '',
+        'sftp-disable-download' => '',
+        'sftp-disable-upload' => '',
+        'recording-path' => '',
+        'recording-name' => '',
+        'recording-exclude-output' => '',
+        'recording-exclude-mouse' => '',
+        'recording-exclude-touch' => '',
+        'recording-include-keys' => '',
+        'create-recording-path' => '',
+        'recording-write-existing' => '',
+        'resize-method' => 'display-update',
+        'enable-audio-input' => '',
+        'enable-touch' => '',
+        'read-only' => '',
+        'gateway-hostname' => '',
+        'gateway-port' => '',
+        'gateway-domain' => '',
+        'gateway-username' => '',
+        'gateway-password' => '',
+        'load-balance-info' => '',
+        'disable-copy' => '',
+        'disable-paste' => '',
+        'wol-send-packet' => '',
+        'wol-mac-addr' => '',
+        'wol-broadcast-addr' => '',
+        'wol-udp-port' => '',
+        'wol-wait-time' => '',
+        'force-lossless' => '',
+        'normalize-clipboard' => '',
     ];
 }
 
@@ -344,8 +355,8 @@ $server->on('connection', function (ConnectionInterface $conn) use (
     $connector,
     $guacdHost,
     $guacdPort,
-    &$sessions,
-    $loop
+    &$sessions
+
 ) {
     $buffer = '';
     $wsBuf = '';
@@ -365,18 +376,19 @@ $server->on('connection', function (ConnectionInterface $conn) use (
         $connector,
         $guacdHost,
         $guacdPort,
-        &$sessions,
-        $loop
+        &$sessions
+
     ) {
-        if (!$handshakeDone) {
+        if (! $handshakeDone) {
             $buffer .= $data;
 
             if (str_contains($buffer, "\r\n\r\n")) {
                 $result = performHandshake($conn, $buffer);
 
-                if (!$result || !$result['token']) {
+                if (! $result || ! $result['token']) {
                     echo "[!] Invalid handshake or missing token\n";
                     $conn->end();
+
                     return;
                 }
 
@@ -388,10 +400,11 @@ $server->on('connection', function (ConnectionInterface $conn) use (
                     'token' => $token,
                 ]);
 
-                if (!$sessionData || !$sessionData['valid']) {
+                if (! $sessionData || ! $sessionData['valid']) {
                     echo "[!] Invalid or expired RDP token: $token\n";
                     $conn->write(encodeFrame("Invalid or expired token.\r\n"));
                     $conn->end();
+
                     return;
                 }
 
@@ -401,9 +414,10 @@ $server->on('connection', function (ConnectionInterface $conn) use (
                     'server_id' => $sessionData['server_id'],
                 ]);
 
-                if (!$credData || !$credData['credentials']) {
+                if (! $credData || ! $credData['credentials']) {
                     $conn->write(encodeFrame("Failed to retrieve credentials.\r\n"));
                     $conn->end();
+
                     return;
                 }
 
@@ -450,45 +464,46 @@ $server->on('connection', function (ConnectionInterface $conn) use (
 
                             if ($gState === 'select') {
                                 [$instrs, $gBuf] = extractGuacInstructions($gBuf);
-                                if (!empty($instrs)) {
+                                if (! empty($instrs)) {
                                     $instruction = $instrs[0];
-                                    echo "[.] guacd raw response: " . preg_replace('/[^\x20-\x7e]/', '.', $instruction) . "\n";
+                                    echo '[.] guacd raw response: '.preg_replace('/[^\x20-\x7e]/', '.', $instruction)."\n";
 
                                     $parts = parseGuacInstruction($instruction);
                                     if ($parts && $parts['opcode'] === 'args') {
                                         $version = $parts['args'][0] ?? 'VERSION_1_5_0';
                                         $paramNames = array_slice($parts['args'], 1);
-                                        echo "[.] guacd expects " . count($paramNames) . " args, version $version\n";
+                                        echo '[.] guacd expects '.count($paramNames)." args, version $version\n";
 
-                                        $argMap = buildRdpArgMap($host, (string)$port, $username, $password, $domain);
+                                        $argMap = buildRdpArgMap($host, (string) $port, $username, $password, $domain);
 
                                         $guacd->write(guacInstruction('size', '1920', '1080', '96'));
                                         $guacd->write(guacInstruction('audio', 'audio/ogg', 'audio/wav'));
                                         $guacd->write(guacInstruction('image', 'image/png', 'image/jpeg'));
                                         $guacd->write(guacInstruction('timezone', 'UTC'));
 
-                                        $values = array_map(fn($pname) => $argMap[$pname] ?? '', $paramNames);
+                                        $values = array_map(fn ($pname) => $argMap[$pname] ?? '', $paramNames);
                                         $guacd->write(guacInstruction('connect', $version, ...$values));
-                                        echo "[.] Sent connect with " . (count($values) + 1) . " args (version + " . count($values) . " param values)\n";
+                                        echo '[.] Sent connect with '.(count($values) + 1).' args (version + '.count($values)." param values)\n";
 
                                         $gState = 'connecting';
                                         echo "[.] Handshake sent, waiting for guacd response...\n";
                                     } else {
-                                        echo "[!] Unexpected guacd opcode: " . ($parts['opcode'] ?? 'unknown') . "\n";
+                                        echo '[!] Unexpected guacd opcode: '.($parts['opcode'] ?? 'unknown')."\n";
                                         $conn->write(encodeFrame("Unexpected guacd response.\r\n"));
                                         $guacd->close();
                                         $conn->end();
                                     }
                                 }
+
                                 return;
                             }
 
                             if ($gState === 'connecting') {
-                                echo "[.] connecting state, buf=" . strlen($gBuf) . " bytes\n";
+                                echo '[.] connecting state, buf='.strlen($gBuf)." bytes\n";
 
                                 [$instrs, $gBuf] = extractGuacInstructions($gBuf);
 
-                                if (!empty($instrs)) {
+                                if (! empty($instrs)) {
                                     foreach ($instrs as $instr) {
                                         $parsed = parseGuacInstruction(rtrim($instr, ';'));
                                         if ($parsed && $parsed['opcode'] === 'ready') {
@@ -511,7 +526,7 @@ $server->on('connection', function (ConnectionInterface $conn) use (
                                 if ($gState === 'connecting' && strncmp($gBuf, "ready\n", 6) === 0) {
                                     $gState = 'connected';
                                     $gBuf = substr($gBuf, 6);
-                                    $conn->write(encodeFrame("5.ready,1.0;"));
+                                    $conn->write(encodeFrame('5.ready,1.0;'));
 
                                     if (strlen($gBuf) > 0) {
                                         [$pending, $gBuf] = extractGuacInstructions($gBuf);
@@ -527,8 +542,9 @@ $server->on('connection', function (ConnectionInterface $conn) use (
                                     $sessions[$sessionId] = ['guacd' => $guacd, 'conn' => $conn];
                                     echo "[+] RDP session $sessionId established (legacy ready\\n)\n";
                                 } elseif ($gState === 'connecting') {
-                                    echo "[.] still connecting, buf=" . strlen($gBuf) . " bytes remaining\n";
+                                    echo '[.] still connecting, buf='.strlen($gBuf)." bytes remaining\n";
                                 }
+
                                 return;
                             }
 
@@ -548,20 +564,24 @@ $server->on('connection', function (ConnectionInterface $conn) use (
                                 ]);
                                 echo "[-] RDP session $sessionId closed\n";
                             }
-                            try { $conn->end(); } catch (\Exception $e) {}
+                            try {
+                                $conn->end();
+                            } catch (Exception $e) {
+                            }
                         });
                     },
-                    function (\Exception $e) use ($conn) {
-                        echo "[!] guacd connection failed: " . $e->getMessage() . "\n";
+                    function (Exception $e) use ($conn) {
+                        echo '[!] guacd connection failed: '.$e->getMessage()."\n";
                         $conn->write(encodeFrame("Failed to connect to RDP proxy.\r\n"));
                         $conn->end();
                     }
                 );
             }
+
             return;
         }
 
-        if (!$guacdConn) {
+        if (! $guacdConn) {
             return;
         }
 
@@ -573,11 +593,15 @@ $server->on('connection', function (ConnectionInterface $conn) use (
             $headerSize = 2;
 
             if ($payloadLen === 126) {
-                if (strlen($wsBuf) < 4) break;
+                if (strlen($wsBuf) < 4) {
+                    break;
+                }
                 $payloadLen = unpack('n', substr($wsBuf, 2, 2))[1];
                 $headerSize = 4;
             } elseif ($payloadLen === 127) {
-                if (strlen($wsBuf) < 10) break;
+                if (strlen($wsBuf) < 10) {
+                    break;
+                }
                 $payloadLen = unpack('J', substr($wsBuf, 2, 8))[1];
                 $headerSize = 10;
             }
@@ -586,7 +610,9 @@ $server->on('connection', function (ConnectionInterface $conn) use (
             $maskSize = $masked ? 4 : 0;
             $frameSize = $headerSize + $maskSize + $payloadLen;
 
-            if (strlen($wsBuf) < $frameSize) break;
+            if (strlen($wsBuf) < $frameSize) {
+                break;
+            }
 
             $frame = substr($wsBuf, 0, $frameSize);
             $wsBuf = substr($wsBuf, $frameSize);
@@ -596,6 +622,7 @@ $server->on('connection', function (ConnectionInterface $conn) use (
             if ($decoded === null) {
                 echo "[.] Close frame from browser\n";
                 $guacdConn->close();
+
                 return;
             }
 
@@ -617,7 +644,8 @@ $server->on('connection', function (ConnectionInterface $conn) use (
         if ($guacdConn) {
             try {
                 $guacdConn->close();
-            } catch (\Exception $e) {}
+            } catch (Exception $e) {
+            }
         }
     });
 });

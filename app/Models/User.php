@@ -3,8 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -12,7 +13,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles, HasUuids;
+    use HasFactory, HasRoles, HasUuids, Notifiable;
 
     /**
      * The attributes that are not mass assignable.
@@ -20,6 +21,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $primaryKey = 'id';
+
     protected $guarded = ['id'];
 
     /**
@@ -63,9 +65,8 @@ class User extends Authenticatable
     /**
      * Scope a query to search users by name or email.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string|null  $search
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeSearch($query, ?string $search)
     {
@@ -75,16 +76,16 @@ class User extends Authenticatable
 
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('email', 'like', "%{$search}%");
         });
     }
 
     /**
      * Scope a query to filter users by role(s).
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string|array|null  $roles
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeFilterByRole($query, $roles)
     {
@@ -102,4 +103,3 @@ class User extends Authenticatable
         });
     }
 }
-

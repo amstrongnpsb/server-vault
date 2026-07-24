@@ -135,11 +135,11 @@ class ServerController extends Controller
      */
     public function duplicate(Server $server): RedirectResponse
     {
-        $baseName = $server->name . '-duplicate';
+        $baseName = $server->name.'-duplicate';
         $newName = $baseName;
         $counter = 2;
         while (Server::where('name', $newName)->exists()) {
-            $newName = $baseName . '-' . $counter;
+            $newName = $baseName.'-'.$counter;
             $counter++;
         }
 
@@ -168,6 +168,26 @@ class ServerController extends Controller
         CheckServerHealthJob::dispatch($server);
 
         return back()->with('success', "Health check queued for {$server->name}.");
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $request->validate([
+            'query' => 'required|string|max:255',
+            'exclude' => 'nullable|array',
+            'exclude.*' => 'uuid',
+        ]);
+
+        $servers = Server::query()
+            ->search($request->input('query'))
+            ->when($request->filled('exclude'), function ($q) use ($request) {
+                $q->whereNotIn('id', $request->exclude);
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name', 'host', 'os', 'status']);
+
+        return response()->json($servers);
     }
 
     public function revealCredential(Request $request): JsonResponse

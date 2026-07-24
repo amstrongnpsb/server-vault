@@ -1,0 +1,53 @@
+- generic [active] [ref=f26e1]:
+  - generic [ref=f26e3]:
+    - complementary [ref=f26e4]:
+      - link "ServerVault Admin Panel" [ref=f26e6] [cursor=pointer]:
+        - /url: http://127.0.0.1:9002/dashboard
+        - generic [ref=f26e18]:
+          - generic [ref=f26e19]: ServerVault
+          - generic [ref=f26e20]: Admin Panel
+      - generic [ref=f26e22]:
+        - generic [ref=f26e23]: Navigation
+        - list [ref=f26e24]:
+          - listitem [ref=f26e25]:
+            - link "Dashboard" [ref=f26e26] [cursor=pointer]:
+              - /url: http://127.0.0.1:9002/dashboard
+          - listitem [ref=f26e33]:
+            - link "User" [ref=f26e34] [cursor=pointer]:
+              - /url: http://127.0.0.1:9002/users
+          - listitem [ref=f26e41]:
+            - link "Roles" [ref=f26e42] [cursor=pointer]:
+              - /url: http://127.0.0.1:9002/roles
+          - listitem [ref=f26e46]:
+            - link "Server" [ref=f26e47] [cursor=pointer]:
+              - /url: http://127.0.0.1:9002/servers
+      - generic [ref=f26e53]:
+        - generic [ref=f26e54]: S
+        - generic [ref=f26e55]:
+          - generic [ref=f26e56]: Superadmin
+          - generic [ref=f26e57]: superadmin@test.com
+    - generic [ref=f26e58]:
+      - banner [ref=f26e59]:
+        - generic [ref=f26e60]:
+          - generic [ref=f26e61]:
+            - button "Toggle sidebar" [ref=f26e62] [cursor=pointer]
+            - heading "Dashboard" [level=2] [ref=f26e65]
+          - generic [ref=f26e66]:
+            - button "Switch to light theme" [ref=f26e67] [cursor=pointer]
+            - button "S Superadmin" [ref=f26e76] [cursor=pointer]:
+              - generic [ref=f26e77]: S
+              - generic [ref=f26e78]: Superadmin
+      - main [ref=f26e79]:
+        - generic [ref=f26e80]:
+          - generic [ref=f26e81]:
+            - generic [ref=f26e82]: Server status
+            - generic [ref=f26e83]:
+              - generic [ref=f26e84]:
+                - generic [ref=f26e85]: Online
+                - generic [ref=f26e90]: "0"
+              - generic [ref=f26e91]:
+                - generic [ref=f26e92]: Offline
+                - generic [ref=f26e100]: "0"
+          - generic [ref=f26e101]: You're logged in!
+  - region "Notifications alt+T":
+    - list

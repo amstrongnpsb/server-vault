@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Server;
 use App\Models\RdpSession;
+use App\Models\Server;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use Inertia\Inertia;

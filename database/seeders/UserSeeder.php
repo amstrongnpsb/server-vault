@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -19,13 +19,14 @@ class UserSeeder extends Seeder
         $adminRole = Role::where('name', 'admin')->first();
         $userRole = Role::where('name', 'user')->first();
 
-        if (!$adminRole || !$userRole) {
+        if (! $adminRole || ! $userRole) {
             $this->command->error('Roles not found. Please run RoleSeeder first.');
+
             return;
         }
 
         $this->command->info('Creating 20 admin users...');
-        
+
         // Create 20 admin users
         for ($i = 1; $i <= 20; $i++) {
             $user = User::create([
@@ -34,7 +35,7 @@ class UserSeeder extends Seeder
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ]);
-            
+
             $user->assignRole($adminRole);
         }
 
@@ -48,7 +49,7 @@ class UserSeeder extends Seeder
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ]);
-            
+
             $user->assignRole($userRole);
         }
 

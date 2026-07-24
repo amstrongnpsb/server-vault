@@ -65,6 +65,7 @@ import {
     Eye,
     RefreshCw,
     Copy,
+    GitBranch,
 } from "lucide-vue-next";
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { debounce } from "lodash-es";
@@ -735,6 +736,20 @@ const getReactiveStatus = (server) => {
                                                         class="mr-2 h-4 w-4"
                                                     />
                                                     Duplicate
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    v-if="hasPermission('view server structure')"
+                                                    as-child
+                                                >
+                                                    <Link
+                                                        :href="route('servers.structure', server.id)"
+                                                        class="flex w-full cursor-pointer items-center"
+                                                    >
+                                                        <GitBranch
+                                                            class="mr-2 h-4 w-4"
+                                                        />
+                                                        Structure
+                                                    </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem

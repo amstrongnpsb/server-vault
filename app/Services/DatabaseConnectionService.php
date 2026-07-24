@@ -29,9 +29,9 @@ class DatabaseConnectionService
 
     private function connectMysql(string $host, ?int $port, string $username, string $password, ?string $dbname): PDO
     {
-        $dsn = 'mysql:host=' . $host . ';port=' . ($port ?? 3306) . ';charset=utf8mb4';
+        $dsn = 'mysql:host='.$host.';port='.($port ?? 3306).';charset=utf8mb4';
         if ($dbname) {
-            $dsn .= ';dbname=' . $dbname;
+            $dsn .= ';dbname='.$dbname;
         }
 
         return new PDO($dsn, $username, $password, [
@@ -43,9 +43,9 @@ class DatabaseConnectionService
 
     private function connectPostgres(string $host, ?int $port, string $username, string $password, ?string $dbname): PDO
     {
-        $dsn = 'pgsql:host=' . $host . ';port=' . ($port ?? 5432) . ';sslmode=prefer';
+        $dsn = 'pgsql:host='.$host.';port='.($port ?? 5432).';sslmode=prefer';
         if ($dbname) {
-            $dsn .= ';dbname=' . $dbname;
+            $dsn .= ';dbname='.$dbname;
         }
 
         return new PDO($dsn, $username, $password, [

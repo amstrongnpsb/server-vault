@@ -1,16 +1,15 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
     try {
         // Check database connection
         DB::connection()->getPdo();
         $dbStatus = 'ok';
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         $dbStatus = 'error';
     }
 
@@ -18,7 +17,7 @@ Route::get('/health', function () {
         // Check Redis connection
         Redis::ping();
         $redisStatus = 'ok';
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         $redisStatus = 'error';
     }
 

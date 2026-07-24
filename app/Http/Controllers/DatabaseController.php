@@ -7,8 +7,8 @@ use App\Models\ServerDatabase;
 use App\Services\DatabaseConnectionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Response;
 use Inertia\Inertia;
+use Inertia\Response;
 use PDO;
 
 class DatabaseController extends Controller
@@ -29,6 +29,7 @@ class DatabaseController extends Controller
         try {
             $pdo = $this->connectionService->connect($serverDatabase);
             $pdo->query('SELECT 1');
+
             return response()->json(['success' => true, 'message' => 'Connection successful']);
         } catch (DatabaseConnectionException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -129,7 +130,7 @@ class DatabaseController extends Controller
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $columns = !empty($rows) ? array_keys($rows[0]) : [];
+            $columns = ! empty($rows) ? array_keys($rows[0]) : [];
 
             return response()->json([
                 'data' => $rows,
@@ -158,7 +159,8 @@ class DatabaseController extends Controller
             $selectPattern = '/^\s*(SELECT|SHOW|DESCRIBE|EXPLAIN)\b/i';
             if (preg_match($selectPattern, $request->sql)) {
                 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                $columns = !empty($rows) ? array_keys($rows[0]) : [];
+                $columns = ! empty($rows) ? array_keys($rows[0]) : [];
+
                 return response()->json([
                     'type' => 'select',
                     'data' => $rows,
@@ -170,7 +172,7 @@ class DatabaseController extends Controller
             return response()->json([
                 'type' => 'modification',
                 'affected' => $stmt->rowCount(),
-                'message' => 'Query executed. ' . $stmt->rowCount() . ' row(s) affected.',
+                'message' => 'Query executed. '.$stmt->rowCount().' row(s) affected.',
             ]);
         } catch (DatabaseConnectionException $e) {
             return response()->json(['type' => 'error', 'message' => $e->getMessage()], 422);
@@ -182,19 +184,22 @@ class DatabaseController extends Controller
     private function mysqlSchemas(PDO $pdo): array
     {
         $stmt = $pdo->query('SHOW DATABASES');
+
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     private function postgresSchemas(PDO $pdo): array
     {
         $stmt = $pdo->query("SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT LIKE 'pg_%' AND schema_name != 'information_schema' ORDER BY schema_name");
+
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     private function mysqlTables(PDO $pdo, string $schema): array
     {
-        $stmt = $pdo->prepare('SHOW TABLES FROM `' . str_replace('`', '``', $schema) . '`');
+        $stmt = $pdo->prepare('SHOW TABLES FROM `'.str_replace('`', '``', $schema).'`');
         $stmt->execute();
+
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
@@ -202,28 +207,31 @@ class DatabaseController extends Controller
     {
         $stmt = $pdo->prepare("SELECT table_name FROM information_schema.tables WHERE table_schema = ? AND table_type = 'BASE TABLE' ORDER BY table_name");
         $stmt->execute([$schema]);
+
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     private function mysqlColumns(PDO $pdo, string $schema, string $table): array
     {
-        $stmt = $pdo->prepare('SHOW COLUMNS FROM `' . str_replace('`', '``', $schema) . '`.`' . str_replace('`', '``', $table) . '`');
+        $stmt = $pdo->prepare('SHOW COLUMNS FROM `'.str_replace('`', '``', $schema).'`.`'.str_replace('`', '``', $table).'`');
         $stmt->execute();
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     private function postgresColumns(PDO $pdo, string $table): array
     {
-        $stmt = $pdo->prepare("SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = ? ORDER BY ordinal_position");
+        $stmt = $pdo->prepare('SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = ? ORDER BY ordinal_position');
         $stmt->execute([$table]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     private function quoteIdentifier(PDO $pdo, string $type, string $identifier): string
     {
         return match ($type) {
-            'MySQL' => '`' . str_replace('`', '``', $identifier) . '`',
-            'PostgreSQL' => '"' . str_replace('"', '""', $identifier) . '"',
+            'MySQL' => '`'.str_replace('`', '``', $identifier).'`',
+            'PostgreSQL' => '"'.str_replace('"', '""', $identifier).'"',
             default => $identifier,
         };
     }
@@ -231,8 +239,8 @@ class DatabaseController extends Controller
     private function quoteTableName(PDO $pdo, string $type, string $schema, string $table): string
     {
         return match ($type) {
-            'MySQL' => '`' . str_replace('`', '``', $schema) . '`.`' . str_replace('`', '``', $table) . '`',
-            'PostgreSQL' => '"' . str_replace('"', '""', $schema) . '"."' . str_replace('"', '""', $table) . '"',
+            'MySQL' => '`'.str_replace('`', '``', $schema).'`.`'.str_replace('`', '``', $table).'`',
+            'PostgreSQL' => '"'.str_replace('"', '""', $schema).'"."'.str_replace('"', '""', $table).'"',
             default => $table,
         };
     }

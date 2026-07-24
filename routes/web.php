@@ -2,11 +2,12 @@
 
 use App\Http\Controllers\DatabaseController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RdpController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServerController;
 use App\Http\Controllers\ServerDatabaseController;
 use App\Http\Controllers\ServerServiceController;
-use App\Http\Controllers\RdpController;
+use App\Http\Controllers\ServerStructureController;
 use App\Http\Controllers\SshTerminalController;
 use App\Http\Controllers\UserController;
 use App\Models\Server;
@@ -46,6 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/servers/{server}/details', [ServerController::class, 'details'])->name('servers.details')->middleware('permission:view servers');
     Route::post('/credentials/reveal', [ServerController::class, 'revealCredential'])->name('credentials.reveal')->middleware('permission:edit servers');
 
+    Route::get('/servers/search', [ServerController::class, 'search'])->name('servers.search')->middleware('permission:view servers');
     Route::post('/servers/{server}/check', [ServerController::class, 'checkHealth'])->name('servers.check')->middleware('permission:check server health');
     Route::post('/servers/{server}/duplicate', [ServerController::class, 'duplicate'])->name('servers.duplicate')->middleware('permission:create servers');
     Route::get('/servers/{server}/terminal', [SshTerminalController::class, 'show'])->name('servers.terminal')->middleware('permission:connect servers');
@@ -54,6 +56,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/servers/{server}/rdp', [RdpController::class, 'show'])->name('servers.rdp')->middleware('permission:connect servers');
     Route::post('/servers/{server}/rdp-connect', [RdpController::class, 'connect'])->name('servers.rdp-connect')->middleware('permission:connect servers');
+
+    // Structure
+    Route::get('/servers/{server}/structure', [ServerStructureController::class, 'show'])->name('servers.structure')->middleware('permission:view server structure');
+    Route::get('/servers/{server}/structure/fetch', [ServerStructureController::class, 'fetch'])->name('servers.structure.fetch')->middleware('permission:view server structure');
+    Route::post('/servers/{server}/structure/connect', [ServerStructureController::class, 'connect'])->name('servers.structure.connect')->middleware('permission:edit server structure');
+    Route::delete('/servers/{server}/structure/connect/{connection}', [ServerStructureController::class, 'disconnect'])->name('servers.structure.disconnect')->middleware('permission:edit server structure');
+    Route::put('/servers/{server}/structure/position', [ServerStructureController::class, 'updatePosition'])->name('servers.structure.position')->middleware('permission:edit server structure');
+    Route::delete('/servers/{server}/structure/node/{node}', [ServerStructureController::class, 'removeNode'])->name('servers.structure.node.remove')->middleware('permission:edit server structure');
 
     // Databases
     Route::post('/servers/{server}/databases', [ServerDatabaseController::class, 'store'])->name('servers.databases.store')->middleware('permission:manage database servers');

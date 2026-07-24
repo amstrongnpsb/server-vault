@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Server;
 use App\Models\RdpSession;
+use App\Models\Server;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,7 +16,7 @@ class InternalRdpController extends Controller
             ->where('token_expires_at', '>', now())
             ->first();
 
-        if (!$session) {
+        if (! $session) {
             return response()->json(['valid' => false], 404);
         }
 

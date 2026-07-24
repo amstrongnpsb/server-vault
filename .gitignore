@@ -27,3 +27,6 @@ Thumbs.db
 
 # Docker environment files
 docker-compose.override.yml
+
+# Bugfix / working notes (not part of the product)
+/documentation/bugfix/
