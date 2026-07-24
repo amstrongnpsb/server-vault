@@ -17,4 +17,14 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'ag-grid': ['ag-grid-community'],
+                    'codemirror': ['codemirror', '@codemirror/lang-sql', '@codemirror/autocomplete', '@codemirror/state', '@codemirror/view', '@codemirror/language', '@lezer/highlight'],
+                },
+            },
+        },
+    },
 });
